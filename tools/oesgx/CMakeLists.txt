@@ -4,6 +4,10 @@
 add_executable(oesgx oesgx.c)
 
 target_link_libraries(oesgx oehost)
+target_compile_options(oesgx PRIVATE
+    -Wno-error=conversion
+    -Wno-error=pointer-arith
+    )
 
 # assemble into proper collector dir
 set_property(TARGET oesgx PROPERTY RUNTIME_OUTPUT_DIRECTORY ${OE_BINDIR})

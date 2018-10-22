@@ -34,6 +34,6 @@ add_executable(edl_host
 )
 
 target_include_directories(edl_host PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..)
-target_compile_options(edl_host PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
+target_compile_options(edl_host PRIVATE -Wno-conversion -Wno-pointer-arith $<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
 
 target_link_libraries(edl_host oehostapp)

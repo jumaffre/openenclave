@@ -45,6 +45,8 @@ add_executable(edl_enc
     )
 
 target_include_directories(edl_enc PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..)
-target_compile_options(edl_enc PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
+target_compile_options(edl_enc PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++11>
+    -Wno-conversion
+)
 
 target_link_libraries(edl_enc oelibcxx oeenclave)
