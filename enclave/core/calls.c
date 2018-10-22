@@ -27,7 +27,7 @@
 #include "td.h"
 #include "thread.h"
 
-uint64_t __oe_enclave_status = OE_OK;
+oe_result_t __oe_enclave_status = OE_OK;
 uint8_t __oe_initialized = 0;
 
 /* If true, disable the debug malloc checking */
@@ -511,7 +511,7 @@ OE_INLINE void _handle_oret(
     td_t* td,
     uint16_t func,
     uint16_t result,
-    int64_t arg)
+    uint64_t arg)
 {
     Callsite* callsite = td->callsites;
 
@@ -544,7 +544,7 @@ oe_result_t oe_ocall(uint16_t func, uint64_t arg_in, uint64_t* arg_out)
     /* If the enclave is in crashing/crashed status, new OCALL should fail
     immediately. */
     if (__oe_enclave_status != OE_OK)
-        OE_RAISE((oe_result_t)__oe_enclave_status);
+        OE_RAISE(__oe_enclave_status);
 
     /* Check for unexpected failures */
     if (!callsite)
@@ -621,7 +621,7 @@ oe_result_t oe_call_host(const char* func, void* args_in)
     }
 
     /* Call into the host */
-    OE_CHECK(oe_ocall(OE_OCALL_CALL_HOST, (int64_t)args, NULL));
+    OE_CHECK(oe_ocall(OE_OCALL_CALL_HOST, (uint64_t)args, NULL));
 
     /* Check the result */
     OE_CHECK(args->result);
@@ -671,7 +671,7 @@ oe_result_t oe_call_host_by_address(
     }
 
     /* Call the host function with this address */
-    OE_CHECK(oe_ocall(OE_OCALL_CALL_HOST_BY_ADDRESS, (int64_t)args, NULL));
+    OE_CHECK(oe_ocall(OE_OCALL_CALL_HOST_BY_ADDRESS, (uint64_t)args, NULL));
 
     /* Check the result */
     OE_CHECK(args->result);
@@ -727,7 +727,7 @@ oe_result_t oe_call_host_function(
     }
 
     /* Call the host function with this address */
-    OE_CHECK(oe_ocall(OE_OCALL_CALL_HOST_FUNCTION, (int64_t)args, NULL));
+    OE_CHECK(oe_ocall(OE_OCALL_CALL_HOST_FUNCTION, (uint64_t)args, NULL));
 
     /* Check the result */
     OE_CHECK(args->result);

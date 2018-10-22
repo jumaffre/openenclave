@@ -162,7 +162,7 @@ OE_INLINE int oe_constant_time_mem_equal(
 
     for (uint32_t i = 0; i < len; ++i)
     {
-        r |= p1[i] ^ p2[i];
+        r |= (uint8_t)(p1[i] ^ p2[i]);
     }
 
     return !r;

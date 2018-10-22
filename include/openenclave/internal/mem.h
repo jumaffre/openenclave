@@ -162,7 +162,7 @@ MEM_INLINE const void* mem_end(const mem_t* mem)
 }
 
 /* Return const pointer */
-MEM_INLINE const void* mem_ptr_at(const mem_t* mem, size_t pos)
+MEM_INLINE const void* mem_ptr_at(const mem_t* mem, ssize_t pos)
 {
     if (!mem_ok(mem))
         return NULL;

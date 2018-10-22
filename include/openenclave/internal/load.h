@@ -46,7 +46,7 @@ OE_INLINE uint64_t __oe_round_up_to_page_size(uint64_t x)
 
 OE_INLINE uint64_t __oe_round_down_to_page_size(uint64_t x)
 {
-    return x & ~(OE_PAGE_SIZE - 1);
+    return x & ~((uint64_t)OE_PAGE_SIZE - 1);
 }
 
 oe_result_t __oe_load_segments(

@@ -812,7 +812,9 @@ oe_result_t oe_call_enclave(oe_enclave_t* enclave, const char* func, void* args)
                 OE_ECALL_CALL_ENCLAVE,
                 (uint64_t)&call_enclave_args,
                 &arg_out));
-        OE_CHECK(arg_out);
+
+        if (arg_out != 0)
+            OE_RAISE((oe_result_t)arg_out);
     }
 
     /* Check the result */
@@ -873,7 +875,9 @@ oe_result_t oe_call_enclave_function(
                 OE_ECALL_CALL_ENCLAVE_FUNCTION,
                 (uint64_t)&args,
                 &arg_out));
-        OE_CHECK(arg_out);
+
+        if (arg_out != 0)
+            OE_RAISE((oe_result_t)arg_out);
     }
 
     /* Check the result */

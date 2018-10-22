@@ -77,7 +77,7 @@ void HandleThreadWait(oe_enclave_t* enclave, uint64_t arg_in)
 
 #if defined(__linux__)
 
-    if (__sync_fetch_and_add(&event->value, -1) == 0)
+    if (__sync_fetch_and_add(&event->value, (uint32_t)-1) == 0)
     {
         do
         {
@@ -178,7 +178,7 @@ void HandleGetQETargetInfo(uint64_t arg_in)
 static char** _backtrace_symbols(
     oe_enclave_t* enclave,
     void* const* buffer,
-    int size)
+    size_t size)
 {
     char** ret = NULL;
     elf64_t elf = ELF64_INIT;
@@ -262,6 +262,7 @@ void oe_handle_backtrace_symbols(oe_enclave_t* enclave, uint64_t arg)
 
     if (args)
     {
-        args->ret = _backtrace_symbols(enclave, args->buffer, args->size);
+        args->ret =
+            _backtrace_symbols(enclave, args->buffer, (size_t)args->size);
     }
 }

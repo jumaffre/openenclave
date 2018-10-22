@@ -126,7 +126,7 @@ static ThreadBuckets* _get_thread_buckets()
 static void _put_thread_buckets(ThreadBuckets* tb)
 {
     oe_assert(tb->flags & THREAD_BUCKET_FLAG_BUSY);
-    tb->flags &= ~THREAD_BUCKET_FLAG_BUSY;
+    tb->flags &= (ThreadBucketFlags)~THREAD_BUCKET_FLAG_BUSY;
 }
 
 // 0 success, error otherwise

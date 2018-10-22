@@ -77,7 +77,7 @@ static int _make_tag(uint8_t field_num, wire_type_t wire_type, uint8_t* tag)
         goto done;
 
     /* Form the tag */
-    *tag = (field_num << 3) | (uint8_t)wire_type;
+    *tag = (uint8_t)((field_num << 3) | (uint8_t)wire_type);
 
     ret = 0;
 
@@ -105,7 +105,7 @@ static int _pack_variant_uint32(mem_t* buf, uint32_t x)
 
     *p++ = (uint8_t)(x);
 
-    return mem_cat(buf, data, p - data);
+    return mem_cat(buf, data, (size_t)(p - data));
 }
 
 static int _pack_tag(mem_t* buf, uint8_t field_num, wire_type_t wire_type)
@@ -118,20 +118,20 @@ static int _pack_tag(mem_t* buf, uint8_t field_num, wire_type_t wire_type)
     return mem_cat(buf, &tag, sizeof(uint8_t));
 }
 
-static ssize_t _unpack_tag(const mem_t* buf, size_t pos, uint8_t* tag)
+static ssize_t _unpack_tag(const mem_t* buf, ssize_t pos, uint8_t* tag)
 {
     size_t size = sizeof(uint8_t);
 
-    if (pos + size > mem_size(buf))
+    if (pos + (ssize_t)size > mem_size(buf))
         return -1;
 
     if (oe_memcpy_s(tag, sizeof(*tag), mem_ptr_at(buf, pos), size) != OE_OK)
         return -1;
 
-    return pos + size;
+    return pos + (ssize_t)size;
 }
 
-static ssize_t _unpack_variant_uint32(mem_t* buf, size_t pos, uint32_t* value)
+static ssize_t _unpack_variant_uint32(mem_t* buf, ssize_t pos, uint32_t* value)
 {
     const uint8_t* p;
     uint32_t result = 0;
@@ -161,7 +161,7 @@ static ssize_t _unpack_variant_uint32(mem_t* buf, size_t pos, uint32_t* value)
 
     *value = result;
 
-    return pos + count;
+    return pos + (ssize_t)count;
 }
 
 static oe_result_t _pack_bytes(
@@ -191,14 +191,17 @@ done:
     return result;
 }
 
-static int _pack_var_int(mem_t* buf, uint8_t field_num, uint64_t value)
+static oe_result_t _pack_var_int(mem_t* buf, uint8_t field_num, uint64_t value)
 {
     oe_result_t result = OE_UNEXPECTED;
 
     if (_pack_tag(buf, field_num, WIRE_TYPE_VARINT) != 0)
         OE_RAISE(OE_FAILURE);
 
-    if (_pack_variant_uint32(buf, value) != 0)
+    if (value > OE_UINT_MAX)
+        OE_RAISE(OE_INVALID_PARAMETER);
+
+    if (_pack_variant_uint32(buf, (uint32_t)value) != 0)
         OE_RAISE(OE_FAILURE);
 
     result = OE_OK;
@@ -209,7 +212,7 @@ done:
 
 static oe_result_t _unpack_var_int(
     mem_t* buf,
-    size_t* pos,
+    ssize_t* pos,
     uint8_t field_num,
     uint32_t* value)
 {
@@ -237,7 +240,7 @@ done:
 
 static oe_result_t _unpack_length_delimited(
     mem_t* buf,
-    size_t* pos,
+    ssize_t* pos,
     uint8_t field_num,
     void* data,
     size_t data_size)
@@ -264,7 +267,7 @@ static oe_result_t _unpack_length_delimited(
 
     OE_CHECK(oe_memcpy_s(data, data_size, mem_ptr_at(buf, *pos), size));
 
-    *pos += size;
+    *pos += (ssize_t)size;
 
     result = OE_OK;
 
@@ -308,7 +311,10 @@ static oe_result_t _write_request(
     /* Wrap message in envelope */
     OE_CHECK(
         _pack_bytes(
-            &envelope, message_type, mem_ptr(message), mem_size(message)));
+            &envelope,
+            (uint8_t)message_type,
+            mem_ptr(message),
+            (uint32_t)mem_size(message)));
 
     /* Send the envelope to the AESM service */
     {
@@ -362,29 +368,33 @@ static oe_result_t _read_response(
     {
         uint8_t tag;
         uint8_t tmp_tag;
-        size_t pos = 0;
+        ssize_t pos = 0;
         uint32_t size;
 
         /* Get the tag of this payload */
-        if ((pos = _unpack_tag(&envelope, pos, &tag)) == (size_t)-1)
+        if ((pos = _unpack_tag(&envelope, pos, &tag)) == -1)
             OE_RAISE(OE_FAILURE);
 
-        if (_make_tag(message_type, WIRE_TYPE_LENGTH_DELIMITED, &tmp_tag) != 0)
+        if (_make_tag(
+                (uint8_t)message_type, WIRE_TYPE_LENGTH_DELIMITED, &tmp_tag) !=
+            0)
             OE_RAISE(OE_FAILURE);
 
         if (tag != tmp_tag)
             OE_RAISE(OE_FAILURE);
 
         /* Get the size of this payload */
-        if ((pos = _unpack_variant_uint32(&envelope, pos, &size)) == (size_t)-1)
+        if ((pos = _unpack_variant_uint32(&envelope, pos, &size)) == -1)
             OE_RAISE(OE_FAILURE);
 
         /* Check the size (must equal unread bytes in envelope) */
-        if (size != mem_size(&envelope) - pos)
+        if (size != mem_size(&envelope) - (size_t)pos)
             OE_RAISE(OE_FAILURE);
 
+        ssize_t temp = (ssize_t)mem_ptr(&envelope) + pos;
+
         /* Read the message from the envelope */
-        mem_cat(message, mem_ptr(&envelope) + pos, size);
+        mem_cat(message, (const void*)temp, (size_t)size);
     }
 
 #if (OE_TRACE_LEVEL >= OE_TRACE_LEVEL_INFO)
@@ -492,7 +502,7 @@ oe_result_t aesm_get_launch_token(
 
     /* Unpack the response */
     {
-        size_t pos = 0;
+        ssize_t pos = 0;
 
         /* Unpack the error code */
         {
@@ -549,7 +559,7 @@ oe_result_t aesm_init_quote(
 
     /* Unpack the response */
     {
-        size_t pos = 0;
+        ssize_t pos = 0;
 
         /* Unpack the error code */
         {
@@ -654,7 +664,7 @@ oe_result_t aesm_get_quote(
 
     /* Unpack the response */
     {
-        size_t pos = 0;
+        ssize_t pos = 0;
 
         /* Unpack the error code */
         {
