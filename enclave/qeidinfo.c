@@ -12,6 +12,7 @@
 /**
  * Validate and copy buffer to enclave memory.
  */
+/*
 static oe_result_t _copy_buffer_to_enclave(
     uint8_t** dst,
     size_t* dst_size,
@@ -34,7 +35,7 @@ static oe_result_t _copy_buffer_to_enclave(
 done:
     return result;
 }
-
+*/
 /**
  * Call into host to fetch qe identity information.
  */
