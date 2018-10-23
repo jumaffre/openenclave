@@ -110,94 +110,6 @@ static oe_result_t _read_public_key(
         sizeof(key->y));
 }
 
-typedef struct _oe_parsed_qe_identity_info
-{
-    uint32_t version;
-    oe_datetime_t issue_date;
-    oe_datetime_t next_update;
-
-    uint32_t miscselect;        // The MISCSELECT that must be set
-    uint32_t miscselectMask;    // Mask of MISCSELECT to enforce
-
-    // TODO: find out what attributes are!
-
-    sgx_attributes_t attributes; // ATTRIBUTES Flags Field 
-    uint32_t         attributesMask; // string
-
-    uint8_t mrsigner[OE_SHA256_SIZE]; // MRSIGNER of the enclave
-
-    uint16_t isvprodid; // ISV assigned Product ID
-    uint16_t isvsvn; // ISV assigned SVN
-
-    uint8_t signature[64];
-} oe_parsed_qe_identity_info_t;
-
-
-oe_result_t oe_parse_qe_identity_info_json(
-    const uint8_t* info_json,
-    size_t info_json_size,
-    oe_parsed_qe_identity_info_t* parsed_info)
-{
-    oe_result_t result = OE_OK;
-    return result;
-}
-
-// uint32_t qe_id_info_size;   // size of qe identity
-// char* qe_id_info;           // qe identity info structure (JSON)
-// uint32_t issuer_chain_size; // size of issuer chain for qe identity info
-// char* issuer_chain;     
-
-oe_result_t oe_enforce_qe_identity()
-{
-    oe_result_t result = OE_FAILURE;
-    sgx_qe_identity_info_t *identity = NULL;
-    oe_parsed_qe_identity_info_t parsed_info = {0};
-    oe_cert_chain_t pck_cert_chain = {0};
-    const uint8_t* pem_pck_certificate = NULL;
-    size_t pem_pck_certificate_size = 0;
-
-    printf("===========qe_identity ========\n");
-    OE_TRACE_INFO("Calling %s\n", __PRETTY_FUNCTION__);
-
-    // fetch qe identity information
-    _get_qe_identity_info(&identity);
-
-    pem_pck_certificate = identity.issuer_chain;
-    pem_pck_certificate_size = identity.issuer_chain_size;
-
-
-    // validate the cert chain.
-    OE_CHECK(
-            oe_cert_chain_read_pem(
-                &pck_cert_chain,
-                pem_pck_certificate,
-                pem_pck_certificate_size));
-
-    // verify qe identity signature
-    printf("qe_identity.issuer_chain:[%s]\n", test->issuer_chain);
-    OE_CHECK(oe_verify_tcb_signature(
-                identity.qe_id_info,
-                identity.qe_id_info_size,
-                (sgx_ecdsa256_signature_t*)identity.signature,
-                &tcb_issuer_chain));
-
-    // parse identity info json blob
-    printf("qe_identity.qe_id_info:[%s]\n", test->qe_id_info);
-    OE_CHECK(oe_parse_qe_identity_info_json(
-                                    identity->qe_id_info,
-                                    identity->qe_id_info_size,
-                                    &parsed_info));    
-
-    // check identity
-
-    _free_qe_identity_info(identity);
-    printf("===========qe_identity ========\n");
-
-    result = OE_OK;
-    return result;
-}
-
-
 static oe_result_t _ecdsa_verify(
     oe_ec_public_key_t* public_key,
     void* data,
@@ -396,11 +308,6 @@ oe_result_t VerifyQuoteImpl(
         // Ensure that the QE is not a debug supporting enclave.
         if (quote_auth_data->qe_report_body.attributes.flags & SGX_FLAGS_DEBUG)
             OE_RAISE(OE_VERIFY_FAILED);
-
-        // enforce the QE revocation certificate
-        OE_CHECK(
-            oe_enforce_qe_revocation(
-                &leaf_cert, &intermediate_cert, &pck_cert_chain));
 
         // check QE Identify
         OE_CHECK(oe_enforce_qe_identity());

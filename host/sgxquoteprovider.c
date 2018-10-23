@@ -320,4 +320,107 @@ void oe_cleanup_get_revocation_info_args(oe_get_revocation_info_args_t* args)
     }
 }
 
+oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
+{
+    oe_result_t result = OE_FAILURE;
+    sgx_plat_error_t r = SGX_PLAT_ERROR_OUT_OF_MEMORY;
+    sgx_qe_identity_info_t *identity = NULL;
+    uint32_t host_buffer_size = 0;
+    uint8_t* p = 0;
+    uint8_t* p_end = 0;
+    OE_TRACE_INFO("Calling %s\n", __PRETTY_FUNCTION__);
+
+    if (!_get_qe_identity_info || !_free_qe_identity_info)
+        OE_RAISE(OE_QUOTE_PROVIDER_LOAD_ERROR);
+
+    // fetch qe identity information
+    r = _get_qe_identity_info(&identity);
+    if (r != SGX_PLAT_ERROR_OK || identity == NULL)
+    {
+        OE_RAISE(OE_QUOTE_PROVIDER_CALL_ERROR);
+    }
+
+    if (identity->qe_id_info == NULL ||
+        identity->qe_id_info_size == 0)
+    {
+        OE_TRACE_INFO("qe_id_info is NULL.\n");
+        OE_RAISE(OE_INVALID_REVOCATION_INFO);
+    }
+    host_buffer_size += identity->qe_id_info_size + 1;
+
+    if (identity->issuer_chain == NULL ||
+        identity->issuer_chain_size == 0)
+    {
+        OE_TRACE_INFO("issuer_chain is NULL.\n");
+        OE_RAISE(OE_INVALID_REVOCATION_INFO);
+    }
+
+    host_buffer_size += identity->issuer_chain_size + 1;
+
+    OE_TRACE_INFO("sgx_ql_get_qe_identity_info succeeded.\n");
+
+    p = (uint8_t*)calloc(1, host_buffer_size);
+    p_end = p + host_buffer_size;
+    if (p == NULL)
+        OE_RAISE(OE_OUT_OF_MEMORY);
+
+    args->host_out_buffer = p;
+
+    if (identity->qe_id_info != NULL)
+    {
+        args->qe_id_info = p;
+        args->qe_id_info_size = identity->qe_id_info_size;
+        OE_CHECK(
+            oe_memcpy_s(
+                args->qe_id_info,
+                args->qe_id_info_size,
+                identity->qe_id_info,
+                identity->qe_id_info_size));
+        // Add null terminator
+        args->qe_id_info[args->qe_id_info_size++] = 0;
+        p += args->qe_id_info_size;
+        OE_TRACE_INFO("qe_id_info_size = %d\n", args->qe_id_info_size);
+        OE_TRACE_INFO("qe_id_info json = \n%s\n", args->qe_id_info);
+    }
+
+    if (identity->issuer_chain != NULL)
+    {
+        args->issuer_chain = p;
+        args->issuer_chain_size = identity->issuer_chain_size;
+        OE_CHECK(
+            oe_memcpy_s(
+                args->issuer_chain,
+                args->issuer_chain_size,
+                identity->issuer_chain,
+                identity->issuer_chain_size));
+        // Add null terminator
+        args->issuer_chain[args->issuer_chain_size++] = 0;
+        p += args->issuer_chain_size;
+        OE_TRACE_INFO(
+            "issuer_chain_size = %d\n",
+            args->issuer_chain_size);
+    }
+
+    if (p != p_end)
+        OE_RAISE(OE_UNEXPECTED);
+
+    result = OE_OK;
+done:
+    if (identity != NULL)
+    {
+        OE_TRACE_INFO("Freeing identity info. \n");
+        _free_qe_identity_info(identity);
+        OE_TRACE_INFO("Freed revocation info.\n");
+    }
+    return result;
+}
+
+void oe_cleanup_qe_identity_info_args(oe_get_qe_identity_info_args_t* args)
+{
+    if (args)
+    {
+        if (args->host_out_buffer)
+            free(args->host_out_buffer);
+    }
+}
 #endif

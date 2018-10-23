@@ -509,6 +509,61 @@ done:
     return result;
 }
 
+/**
+ * Schema:
+ * {
+ *    "tcbInfo" : object of type tcbInfo,
+ *    "signature" : "hex string"
+ * }
+ */
+oe_result_t oe_parse_qe_identity_info_json(
+    const uint8_t* info_json,
+    size_t info_json_size,
+    oe_parsed_qe_identity_info_t* parsed_info)
+{
+    oe_result_t result = OE_TCB_INFO_PARSE_ERROR;
+    const uint8_t* itr = tcb_info_json;
+    const uint8_t* end = tcb_info_json + tcb_info_json_size;
+
+    if (tcb_info_json == NULL || tcb_info_json_size == 0 ||
+        platform_tcb_level == NULL || parsed_info == NULL)
+        OE_RAISE(OE_INVALID_PARAMETER);
+
+    // Pointer wrapping.
+    if (end <= itr)
+        OE_RAISE(OE_INVALID_PARAMETER);
+
+    if (platform_tcb_level->status != OE_TCB_LEVEL_STATUS_UNKNOWN)
+        OE_RAISE(OE_INVALID_PARAMETER);
+
+    itr = _skip_ws(itr, end);
+    OE_CHECK(_read('{', &itr, end));
+
+    OE_TRACE_INFO("Reading tcbInfo\n");
+    OE_CHECK(_read_property_name_and_colon("tcbInfo", &itr, end));
+    OE_CHECK(_read_tcb_info(&itr, end, platform_tcb_level, parsed_info));
+    OE_CHECK(_read(',', &itr, end));
+
+    OE_TRACE_INFO("Reading signature\n");
+    OE_CHECK(_read_property_name_and_colon("signature", &itr, end));
+    OE_CHECK(
+        _read_hex_string(
+            &itr, end, parsed_info->signature, sizeof(parsed_info->signature)));
+
+    OE_CHECK(_read('}', &itr, end));
+
+    if (itr == end)
+    {
+        if (platform_tcb_level->status != OE_TCB_LEVEL_STATUS_UP_TO_DATE)
+            OE_RAISE(OE_TCB_LEVEL_INVALID);
+
+        OE_TRACE_INFO("TCB Info json parsing successful.\n");
+        result = OE_OK;
+    }
+done:
+    return result;
+}
+
 static oe_result_t _ecdsa_verify(
     oe_ec_public_key_t* publicKey,
     const void* data,

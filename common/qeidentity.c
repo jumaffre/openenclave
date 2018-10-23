@@ -86,62 +86,7 @@ typedef struct _url
     char str[256];
 } url_t;
 
-/**
- * Get CRL distribution points from given cert.
- */
 
-static oe_result_t _get_crl_distribution_point(oe_cert_t* cert, char** url)
-{
-    oe_result_t result = OE_FAILURE;
-    size_t buffer_size = 512;
-    uint8_t* buffer = malloc(buffer_size);
-    const char** urls = NULL;
-    uint64_t num_urls = 0;
-    size_t url_length = 0;
-
-    if (buffer == NULL)
-        OE_RAISE(OE_OUT_OF_MEMORY);
-
-    result = oe_get_crl_distribution_points(
-        cert, &urls, &num_urls, buffer, &buffer_size);
-
-    if (result == OE_BUFFER_TOO_SMALL)
-    {
-        free(buffer);
-        buffer = malloc(buffer_size);
-        if (buffer == NULL)
-            OE_RAISE(OE_OUT_OF_MEMORY);
-
-        result = oe_get_crl_distribution_points(
-            cert, &urls, &num_urls, buffer, &buffer_size);
-    }
-
-    if (result == OE_OK)
-    {
-        // At most 1 distribution point is expected.
-        if (num_urls != 1)
-            OE_RAISE(OE_FAILURE);
-
-        // Sanity check. No URL should be this large.
-        url_length = strlen(urls[0]);
-        if (url_length > OE_INT16_MAX)
-            OE_RAISE(OE_OUT_OF_BOUNDS);
-
-        // Add +1 to include null character.
-        url_length++;
-
-        *url = (char*)malloc(url_length);
-        if (*url == NULL)
-            OE_RAISE(OE_OUT_OF_MEMORY);
-
-        OE_CHECK(oe_memcpy_s(*url, url_length, urls[0], url_length));
-        result = OE_OK;
-    }
-
-done:
-    free(buffer);
-    return result;
-}
 
 static void _trace_datetime(const char* msg, const oe_datetime_t* date)
 {
@@ -153,163 +98,133 @@ static void _trace_datetime(const char* msg, const oe_datetime_t* date)
 #endif
 }
 
-oe_result_t oe_enforce_revocation(
-    oe_cert_t* leaf_cert,
-    oe_cert_t* intermediate_cert,
-    oe_cert_chain_t* pck_cert_chain)
+
+typedef struct _oe_parsed_qe_identity_info
 {
-    oe_result_t result = OE_FAILURE;
-    ParsedExtensionInfo parsed_extension_info = {{0}};
-    oe_get_revocation_info_args_t revocation_args = {0};
-    oe_cert_chain_t tcb_issuer_chain = {0};
-    oe_cert_chain_t crl_issuer_chain[3] = {{{0}}};
-    oe_parsed_tcb_info_t parsed_tcb_info = {0};
-    oe_tcb_level_t platform_tcb_level = {{0}};
-    oe_verify_cert_error_t cert_verify_error = {0};
-    char* intermediate_crl_url = NULL;
-    char* leaf_crl_url = NULL;
-    oe_crl_t crls[2] = {{{0}}};
-    const oe_crl_t* crl_ptrs[2] = {&crls[0], &crls[1]};
-    oe_datetime_t crl_this_update_date = {0};
-    oe_datetime_t crl_next_update_date = {0};
+    uint32_t version;
+    oe_datetime_t issue_date;
+    oe_datetime_t next_update;
 
-    if (intermediate_cert == NULL || leaf_cert == NULL)
-        OE_RAISE(OE_INVALID_PARAMETER);
+    uint32_t miscselect;        // The MISCSELECT that must be set
+    uint32_t miscselectMask;    // Mask of MISCSELECT to enforce
 
-    OE_STATIC_ASSERT(
-        OE_COUNTOF(crl_issuer_chain) ==
-        OE_COUNTOF(revocation_args.crl_issuer_chain));
+    // TODO: find out what attributes are!
 
-    // Gather fmspc.
-    OE_CHECK(_parse_sgx_extensions(leaf_cert, &parsed_extension_info));
-    OE_CHECK(
-        oe_memcpy_s(
-            revocation_args.fmspc,
-            sizeof(revocation_args.fmspc),
-            parsed_extension_info.fmspc,
-            sizeof(parsed_extension_info.fmspc)));
+    sgx_attributes_t attributes; // ATTRIBUTES Flags Field 
+    uint32_t         attributesMask; // string
 
-    // Gather CRL distribution point URLs from certs.
-    OE_CHECK(
-        _get_crl_distribution_point(intermediate_cert, &intermediate_crl_url));
-    OE_CHECK(_get_crl_distribution_point(leaf_cert, &leaf_crl_url));
+    uint8_t mrsigner[OE_SHA256_SIZE]; // MRSIGNER of the enclave
 
-    revocation_args.crl_urls[0] = leaf_crl_url;
-    revocation_args.crl_urls[1] = intermediate_crl_url;
-    revocation_args.num_crl_urls = 2;
+    uint16_t isvprodid; // ISV assigned Product ID
+    uint16_t isvsvn; // ISV assigned SVN
 
-    OE_CHECK(oe_get_revocation_info(&revocation_args));
+    uint8_t signature[64];
+} oe_parsed_qe_identity_info_t;
 
-    // Apply revocation info.
-    OE_CHECK(
-        oe_cert_chain_read_pem(
-            &tcb_issuer_chain,
-            revocation_args.tcb_issuer_chain,
-            revocation_args.tcb_issuer_chain_size));
 
-    // Read CRLs for each cert other than root. If any CRL is missing, the read
-    // will error out.
-    for (uint32_t i = 0; i < revocation_args.num_crl_urls; ++i)
-    {
-        OE_CHECK(
-            oe_crl_read_der(
-                &crls[i], revocation_args.crl[i], revocation_args.crl_size[i]));
-        OE_CHECK(
-            oe_cert_chain_read_pem(
-                &crl_issuer_chain[i],
-                revocation_args.crl_issuer_chain[i],
-                revocation_args.crl_issuer_chain_size[i]));
-    }
-
-    // Verify the leaf cert.
-    // oe_cert_verify incorporates openssl -crl_check_all semantics.
-    // For successful verification:
-    //    1. The certificate chain must be valid. Each cert must
-    //       have its issuer CA in the chain.
-    //    2. Each issuer CA (ie all certs other than the leaf cert)
-    //       must also have a matching CRL issued by the issuer CA.
-    //    3. The certificate chain must pass signature verification.
-    //    4. No certificate in the chain must be revoked.
-    // Note: An issuer CA can revoke only the certs that it has issued.
-    // this follows that the certificate chain and CRL issuer chains must
-    // be the same. We pass the crl_issuer_chain here to assert that
-    // constraint. If the crl_issuer_chain was different from the certificate
-    // chain, then verification would fail because the CRLs will not be found
-    // for certificates in the chain.
-    OE_CHECK(
-        oe_cert_verify(
-            leaf_cert, &crl_issuer_chain[0], crl_ptrs, 2, &cert_verify_error));
-
-    for (uint32_t i = 0; i < OE_COUNTOF(platform_tcb_level.sgx_tcb_comp_svn);
-         ++i)
-    {
-        platform_tcb_level.sgx_tcb_comp_svn[i] =
-            parsed_extension_info.comp_svn[i];
-    }
-    platform_tcb_level.pce_svn = parsed_extension_info.pce_svn;
-    platform_tcb_level.status = OE_TCB_LEVEL_STATUS_UNKNOWN;
-
-    OE_CHECK(
-        oe_parse_tcb_info_json(
-            revocation_args.tcb_info,
-            revocation_args.tcb_info_size,
-            &platform_tcb_level,
-            &parsed_tcb_info));
-
-    OE_CHECK(
-        oe_verify_tcb_signature(
-            parsed_tcb_info.tcb_info_start,
-            parsed_tcb_info.tcb_info_size,
-            (sgx_ecdsa256_signature_t*)parsed_tcb_info.signature,
-            &tcb_issuer_chain));
-
-    // Check that the tcb has been issued after the earliest date that the
-    // enclave accepts.
-    if (oe_datetime_compare(
-            &parsed_tcb_info.issue_date, &_sgx_minimim_crl_tcb_issue_date) != 1)
-        OE_RAISE(OE_INVALID_REVOCATION_INFO);
-
-    // Check that the CRLs have not expired.
-    // The next update of the CRL must be after the earliest date that
-    // the enclave accepts.
-    for (uint32_t i = 0; i < OE_COUNTOF(crls); ++i)
-    {
-        OE_CHECK(
-            oe_crl_get_update_dates(
-                &crls[0], &crl_this_update_date, &crl_next_update_date));
-
-        _trace_datetime("crl this update date ", &crl_this_update_date);
-        _trace_datetime("crl next update date ", &crl_next_update_date);
-
-        // CRL must be issued after minimum date.
-        if (oe_datetime_compare(
-                &crl_this_update_date, &_sgx_minimim_crl_tcb_issue_date) != 1)
-            OE_RAISE(OE_INVALID_REVOCATION_INFO);
-
-        // Also check that next update date is after minimum date.
-        if (oe_datetime_compare(
-                &crl_next_update_date, &_sgx_minimim_crl_tcb_issue_date) != 1)
-            OE_RAISE(OE_INVALID_REVOCATION_INFO);
-    }
-
-    result = OE_OK;
-
-done:
-    for (int32_t i = revocation_args.num_crl_urls - 1; i >= 0; --i)
-    {
-        oe_crl_free(&crls[i]);
-    }
-    for (uint32_t i = 0; i < revocation_args.num_crl_urls; ++i)
-    {
-        oe_cert_chain_free(&crl_issuer_chain[i]);
-    }
-    oe_cert_chain_free(&tcb_issuer_chain);
-
-    free(leaf_crl_url);
-    free(intermediate_crl_url);
-    oe_cleanup_get_revocation_info_args(&revocation_args);
-
+oe_result_t oe_parse_qe_identity_info_json(
+    const uint8_t* info_json,
+    size_t info_json_size,
+    oe_parsed_qe_identity_info_t* parsed_info)
+{
+    oe_result_t result = OE_OK;
     return result;
 }
 
+oe_result_t oe_enforce_qe_identity()
+{
+    oe_result_t result = OE_FAILURE;
+    oe_get_qe_identity_info_args_t qe_id_args = {0};
+
+    OE_TRACE_INFO("Calling %s\n", __PRETTY_FUNCTION__);
+
+    // fetch qe identity information
+    OE_CHECK(oe_get_qe_identity_info(&qe_id_args));
+
+    pem_pck_certificate = qe_id_args.issuer_chain;
+    pem_pck_certificate_size = qe_id_args.issuer_chain_size;
+
+
+    // validate the cert chain.
+    OE_CHECK(
+            oe_cert_chain_read_pem(
+                &pck_cert_chain,
+                pem_pck_certificate,
+                pem_pck_certificate_size));
+
+    // verify qe identity signature
+    printf("qe_identity.issuer_chain:[%s]\n", qe_id_args.issuer_chain);
+    OE_CHECK(oe_verify_tcb_signature(
+                qe_id_args.qe_id_info,
+                qe_id_args.qe_id_info_size,
+                (sgx_ecdsa256_signature_t*)qe_id_args.signature,
+                &qe_id_args.issuer_chain));
+
+    // parse identity info json blob
+    printf("qe_identity.qe_id_info:[%s]\n", test->qe_id_info);
+    OE_CHECK(oe_parse_qe_identity_info_json(
+                                    qe_id_args.qe_id_info,
+                                    qe_id_args.qe_id_info_size,
+                                    &parsed_info));    
+
+    // check identity
+    OE_CHECK(oe_cleanup_qe_identity_info_args(&args));
+    result = OE_OK;
+
+done:
+    return result;
+}
+
+/*
+{
+
+    oe_result_t result = OE_FAILURE;
+    sgx_qe_identity_info_t *identity = NULL;
+    oe_parsed_qe_identity_info_t parsed_info = {0};
+    oe_cert_chain_t pck_cert_chain = {0};
+    const uint8_t* pem_pck_certificate = NULL;
+    size_t pem_pck_certificate_size = 0;
+
+    printf("===========qe_identity ========\n");
+    OE_TRACE_INFO("Calling %s\n", __PRETTY_FUNCTION__);
+
+    // fetch qe identity information
+    _get_qe_identity_info(&identity);
+
+    pem_pck_certificate = identity.issuer_chain;
+    pem_pck_certificate_size = identity.issuer_chain_size;
+
+
+    // validate the cert chain.
+    OE_CHECK(
+            oe_cert_chain_read_pem(
+                &pck_cert_chain,
+                pem_pck_certificate,
+                pem_pck_certificate_size));
+
+    // verify qe identity signature
+    printf("qe_identity.issuer_chain:[%s]\n", test->issuer_chain);
+    OE_CHECK(oe_verify_tcb_signature(
+                identity.qe_id_info,
+                identity.qe_id_info_size,
+                (sgx_ecdsa256_signature_t*)identity.signature,
+                &tcb_issuer_chain));
+
+    // parse identity info json blob
+    printf("qe_identity.qe_id_info:[%s]\n", test->qe_id_info);
+    OE_CHECK(oe_parse_qe_identity_info_json(
+                                    identity->qe_id_info,
+                                    identity->qe_id_info_size,
+                                    &parsed_info));    
+
+    // check identity
+
+    _free_qe_identity_info(identity);
+    printf("===========qe_identity ========\n");
+
+    result = OE_OK;
+    return result;
+
+}
+*/
 #endif
