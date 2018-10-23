@@ -18,6 +18,7 @@ add_library(oeenclave STATIC
     cmac.c
     key.c
     link.c
+    qeidinfo.c
     random.c
     report.c
     revocationinfo.c
