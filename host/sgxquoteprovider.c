@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-
+#define OE_TRACE_LEVEL 2
 #include <dlfcn.h>
 #include <openenclave/bits/safecrt.h>
 #include <openenclave/internal/hexdump.h>
@@ -30,9 +30,13 @@
 static void* _lib_handle = 0;
 static sgx_ql_get_revocation_info_t _get_revocation_info = 0;
 static sgx_ql_free_revocation_info_t _free_revocation_info = 0;
+static sgx_get_qe_identity_info_t _get_qe_identity_info = 0;
+static sgx_free_qe_identity_info_t _free_qe_identity_info = 0;
 
 static void _unload_quote_provider()
 {
+    OE_TRACE_INFO(
+    "_unload_quote_provider libdcap_quoteprov.so\n");
     if (_lib_handle)
     {
         dlclose(_lib_handle);
@@ -49,13 +53,14 @@ static void _quote_provider_log(sgx_ql_log_level_t level, const char* message)
 
     formatted[sizeof(formatted) - 1] = 0;
 
-    printf("%s", formatted);
+    printf("libdcap_quoteprov.so: %s", formatted);
 }
 
 static void _load_quote_provider()
 {
     if (_lib_handle == 0)
     {
+        OE_TRACE_INFO("_load_quote_provider libdcap_quoteprov.so\n");
         _lib_handle = dlopen("libdcap_quoteprov.so", RTLD_LAZY | RTLD_LOCAL);
         if (_lib_handle != 0)
         {
@@ -90,6 +95,19 @@ static void _load_quote_provider()
                     "sgxquoteprovider: sgx_ql_set_logging_function "
                     "not found\n");
             }
+
+            _get_qe_identity_info =
+                dlsym(_lib_handle, "sgx_get_qe_identity_info");
+            _free_qe_identity_info =
+                dlsym(_lib_handle, "sgx_free_qe_identity_info");
+
+            OE_TRACE_INFO(
+                "sgxquoteprovider: _get_revocation_info = 0x%lx\n",
+                (uint64_t)_get_qe_identity_info);
+            OE_TRACE_INFO(
+                "sgxquoteprovider: _free_revocation_info = 0x%lx\n",
+                (uint64_t)_free_qe_identity_info);
+
             atexit(_unload_quote_provider);
         }
         else
