@@ -379,7 +379,7 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
         // Add null terminator
         args->qe_id_info[args->qe_id_info_size++] = 0;
         p += args->qe_id_info_size;
-        OE_TRACE_INFO("qe_id_info_size = %d\n", args->qe_id_info_size);
+        OE_TRACE_INFO("qe_id_info_size = %ld\n", args->qe_id_info_size);
         OE_TRACE_INFO("qe_id_info json = \n%s\n", args->qe_id_info);
     }
 
@@ -397,7 +397,7 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
         args->issuer_chain[args->issuer_chain_size++] = 0;
         p += args->issuer_chain_size;
         OE_TRACE_INFO(
-            "issuer_chain_size = %d\n",
+            "issuer_chain_size = %ld\n",
             args->issuer_chain_size);
     }
 

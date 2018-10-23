@@ -76,6 +76,35 @@ oe_result_t oe_verify_tcb_signature(
     sgx_ecdsa256_signature_t* signature,
     oe_cert_chain_t* tcb_cert_chain);
 
+
+
+
+typedef struct _oe_parsed_qe_identity_info
+{
+    uint32_t version;
+    oe_datetime_t issue_date;
+    oe_datetime_t next_update;
+
+    uint32_t miscselect;        // The MISCSELECT that must be set
+    uint32_t miscselectMask;    // Mask of MISCSELECT to enforce
+
+    // TODO: find out what attributes are!
+
+    sgx_attributes_t attributes; // ATTRIBUTES Flags Field 
+    uint32_t         attributesMask; // string
+
+    uint8_t mrsigner[OE_SHA256_SIZE]; // MRSIGNER of the enclave
+
+    uint16_t isvprodid; // ISV assigned Product ID
+    uint16_t isvsvn; // ISV assigned SVN
+
+    uint8_t signature[64];
+} oe_parsed_qe_identity_info_t;
+
+oe_result_t oe_parse_qe_identity_info_json(
+    const uint8_t* info_json,
+    size_t info_json_size,
+    oe_parsed_qe_identity_info_t* parsed_info);
 #endif
 
 OE_EXTERNC_END

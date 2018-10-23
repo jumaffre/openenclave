@@ -10,6 +10,7 @@
 #include <openenclave/internal/utils.h>
 #include "common.h"
 #include "revocation.h"
+#include "qeidentity.h"
 #define  OE_USE_LIBSGX 1
 #ifdef OE_USE_LIBSGX
 
