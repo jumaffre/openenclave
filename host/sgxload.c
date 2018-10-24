@@ -732,9 +732,20 @@ oe_result_t oe_sgx_delete_enclave(oe_enclave_t* enclave)
     if (!enclave)
         OE_RAISE(OE_INVALID_PARAMETER);
 
+    /* free allocate memory. */
+    result = _sgx_free_enclave_memory(enclave, enclave->size);
+
+done:
+
+    return result;
+}
+
+oe_result_t _sgx_free_enclave_memory(void* enclave, size_t size)
+{
+    oe_result_t result = OE_UNEXPECTED;
+
 #if defined(__linux__)
 
-/* FLC Linux needs to call `enclave_delete` in SGX mode. */
 #if defined(OE_USE_LIBSGX)
     if (!enclave->simulate)
     {
@@ -743,27 +754,20 @@ oe_result_t oe_sgx_delete_enclave(oe_enclave_t* enclave)
             OE_RAISE(OE_PLATFORM_ERROR);
         if (enclave_error != 0)
             OE_RAISE(OE_PLATFORM_ERROR);
+        
     }
     else /* FLC simulation mode needs to munmap. */
 #endif
-
-#endif /* END __LINUX __*/
     {
-        /* free allocate memory. */
-        result = _sgx_free_enclave_memory((void*)enclave->addr, enclave->size);
+        munmap(enclave, size);
     }
 
-done:
-
-    return result;
-}
-
-oe_result_t _sgx_free_enclave_memory(void* addr, size_t size)
-{
-#if defined(__linux__)
-    munmap(addr, size);
 #elif defined(_WIN32)
-    VirtualFree(addr, 0, MEM_RELEASE);
+    VirtualFree(enclave, 0, MEM_RELEASE);   
 #endif
-    return OE_OK;
+
+    result = OE_OK;
+
+done:
+    return result;
 }
