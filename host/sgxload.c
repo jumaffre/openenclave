@@ -757,6 +757,9 @@ oe_result_t _sgx_free_enclave_memory(void* enclave, size_t size)
             OE_RAISE(OE_PLATFORM_ERROR);
         if (enclave_error != 0)
             OE_RAISE(OE_PLATFORM_ERROR);
+
+        result = OE_OK;
+        goto done;
     }
     else /* FLC simulation mode needs to munmap. */
 #endif
