@@ -747,14 +747,16 @@ oe_result_t _sgx_free_enclave_memory(void* enclave, size_t size)
 #if defined(__linux__)
 
 #if defined(OE_USE_LIBSGX)
-    if (!enclave->simulate)
+
+    oe_enclave_t* p_enclave = (oe_enclave_t*)enclave;
+
+    if (!p_enclave->simulate)
     {
         uint32_t enclave_error = 0;
-        if (!enclave_delete((void*)enclave->addr, &enclave_error))
+        if (!enclave_delete((void*)p_enclave->addr, &enclave_error))
             OE_RAISE(OE_PLATFORM_ERROR);
         if (enclave_error != 0)
             OE_RAISE(OE_PLATFORM_ERROR);
-        
     }
     else /* FLC simulation mode needs to munmap. */
 #endif
@@ -763,7 +765,7 @@ oe_result_t _sgx_free_enclave_memory(void* enclave, size_t size)
     }
 
 #elif defined(_WIN32)
-    VirtualFree(enclave, 0, MEM_RELEASE);   
+    VirtualFree(enclave, 0, MEM_RELEASE);
 #endif
 
     result = OE_OK;
