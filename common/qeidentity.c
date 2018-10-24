@@ -36,6 +36,10 @@ oe_result_t oe_enforce_qe_identity(void)
     // fetch qe identity information
     OE_CHECK(oe_get_qe_identity_info(&qe_id_args));
 
+    // TODO:
+    // need to print out the identity information for callers 
+    // from both enclave and host
+
     pem_pck_certificate = qe_id_args.issuer_chain;
     pem_pck_certificate_size = qe_id_args.issuer_chain_size;
 
