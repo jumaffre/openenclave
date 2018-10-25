@@ -491,7 +491,7 @@ done:
     //  free enclave  memory
     if (result != OE_OK && context->type == OE_SGX_LOAD_TYPE_CREATE &&
         base != NULL)
-        _sgx_free_enclave_memory(base, enclave_size);
+        _sgx_free_enclave_memory(base, enclave_size, NULL);
 
     if (secs)
         oe_memalign_free(secs);
@@ -733,14 +733,18 @@ oe_result_t oe_sgx_delete_enclave(oe_enclave_t* enclave)
         OE_RAISE(OE_INVALID_PARAMETER);
 
     /* free allocate memory. */
-    result = _sgx_free_enclave_memory(enclave, enclave->size);
+    result = _sgx_free_enclave_memory(
+        (void*)enclave->addr, enclave->size, enclave->simulate);
 
 done:
 
     return result;
 }
 
-oe_result_t _sgx_free_enclave_memory(void* enclave, size_t size)
+oe_result_t _sgx_free_enclave_memory(
+    void* addr,
+    size_t size,
+    bool is_simulation)
 {
     oe_result_t result = OE_UNEXPECTED;
 
@@ -748,31 +752,28 @@ oe_result_t _sgx_free_enclave_memory(void* enclave, size_t size)
 
 #if defined(OE_USE_LIBSGX)
 
-    oe_enclave_t* p_enclave = (oe_enclave_t*)enclave;
-
-    if (!p_enclave->simulate)
+    if (!is_simulation)
     {
         uint32_t enclave_error = 0;
-        if (!enclave_delete((void*)p_enclave->addr, &enclave_error))
+        if (!enclave_delete((void*)addr, &enclave_error))
             OE_RAISE(OE_PLATFORM_ERROR);
         if (enclave_error != 0)
             OE_RAISE(OE_PLATFORM_ERROR);
 
         result = OE_OK;
-        goto done;
+    done:
+        return result;
     }
     else /* FLC simulation mode needs to munmap. */
 #endif
     {
-        munmap(enclave, size);
+        munmap(addr, size);
     }
 
 #elif defined(_WIN32)
-    VirtualFree(enclave, 0, MEM_RELEASE);
+    VirtualFree((void*)addr, 0, MEM_RELEASE);
 #endif
 
     result = OE_OK;
-
-done:
     return result;
 }

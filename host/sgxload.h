@@ -45,7 +45,10 @@ oe_result_t oe_sgx_initialize_enclave(
 
 oe_result_t oe_sgx_delete_enclave(oe_enclave_t* enclave);
 
-oe_result_t _sgx_free_enclave_memory(void* addr, size_t size);
+oe_result_t _sgx_free_enclave_memory(
+    void* addr,
+    size_t size,
+    bool is_simulation);
 
 OE_EXTERNC_END
 
