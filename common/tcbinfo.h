@@ -99,6 +99,8 @@ typedef struct _oe_parsed_qe_identity_info
     uint16_t isvsvn; // ISV assigned SVN
 
     uint8_t signature[64];
+    const uint8_t* info_start;
+    size_t info_size;    
 } oe_parsed_qe_identity_info_t;
 
 oe_result_t oe_parse_qe_identity_info_json(

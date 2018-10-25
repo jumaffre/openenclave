@@ -164,7 +164,7 @@ void HandleGetQuoteRevocationInfo(uint64_t arg_in)
     args->result = oe_get_revocation_info(args);
 }
 
-void HandleGetQuoteEnclaveIdentityInfo(uint64_t arg_in);
+void HandleGetQuoteEnclaveIdentityInfo(uint64_t arg_in)
 {
     oe_get_qe_identity_info_args_t* args =
         (oe_get_qe_identity_info_args_t*)arg_in;

@@ -9,6 +9,7 @@
 #include <openenclave/internal/enclavelibc.h>
 #include <openenclave/internal/raise.h>
 
+#include <stdio.h>
 /**
  * Validate and copy buffer to enclave memory.
  */
@@ -45,7 +46,6 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
     uint8_t* host_args_buffer = NULL;
     oe_get_qe_identity_info_args_t* host_args = NULL;
     oe_get_qe_identity_info_args_t tmp_args = {0};
-    uint8_t* p = NULL;
 
     printf("Enclave: Calling %s\n", __PRETTY_FUNCTION__);
 
@@ -59,13 +59,20 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
         OE_RAISE(OE_OUT_OF_MEMORY);
 
     // Copy args struct.
-    host_args = (oe_get_revocation_info_args_t*)host_args_buffer;
+    host_args = (oe_get_qe_identity_info_args_t*)host_args_buffer;
     *host_args = *args;
+
+
+    printf("******************Soccerl 1 %s\n", __PRETTY_FUNCTION__);
 
     OE_CHECK(oe_ocall(OE_OCALL_GET_QE_ID_INFO, (uint64_t)host_args, NULL));
 
+    printf("******************Soccerl 2 %s\n", __PRETTY_FUNCTION__);
+
     // Copy args to prevent TOCTOU issues.
     tmp_args = *host_args;
+
+    printf("******************Soccerl 3 %s\n", __PRETTY_FUNCTION__);
 
     OE_CHECK(tmp_args.result);
 
@@ -87,6 +94,9 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
             &args->issuer_chain_size,
             tmp_args.issuer_chain,
             tmp_args.issuer_chain_size));
+
+printf("******************Soccerl 4  %s args->qe_id_info = [%s]\n", __PRETTY_FUNCTION__, args->qe_id_info);
+printf("******************Soccerl 5  %s args->issuer_chain = [%s]\n", __PRETTY_FUNCTION__, args->issuer_chain);
 
     // Check for null terminators.
     if (args->qe_id_info[args->qe_id_info_size - 1] != 0 ||
