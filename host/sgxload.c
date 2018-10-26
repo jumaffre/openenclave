@@ -489,9 +489,12 @@ oe_result_t oe_sgx_create_enclave(
 done:
 
     //  free enclave  memory
-    if (result != OE_OK && context->type == OE_SGX_LOAD_TYPE_CREATE &&
-        base != NULL)
-        _sgx_free_enclave_memory(base, enclave_size, NULL);
+    if (result != OE_OK && context != NULL &&
+        context->type == OE_SGX_LOAD_TYPE_CREATE && base != NULL)
+    {
+        _sgx_free_enclave_memory(
+            base, enclave_size, oe_sgx_is_simulation_load_context(context));
+    }
 
     if (secs)
         oe_memalign_free(secs);
@@ -751,11 +754,10 @@ oe_result_t _sgx_free_enclave_memory(
 #if defined(__linux__)
 
 #if defined(OE_USE_LIBSGX)
-
     if (!is_simulation)
     {
         uint32_t enclave_error = 0;
-        if (!enclave_delete((void*)addr, &enclave_error))
+        if (!enclave_delete(addr, &enclave_error))
             OE_RAISE(OE_PLATFORM_ERROR);
         if (enclave_error != 0)
             OE_RAISE(OE_PLATFORM_ERROR);
@@ -771,7 +773,7 @@ oe_result_t _sgx_free_enclave_memory(
     }
 
 #elif defined(_WIN32)
-    VirtualFree((void*)addr, 0, MEM_RELEASE);
+    VirtualFree(addr, 0, MEM_RELEASE);
 #endif
 
     result = OE_OK;
