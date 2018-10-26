@@ -53,19 +53,33 @@ oe_result_t oe_enforce_qe_identity(void)
                 pem_pck_certificate_size));
 
     // parse identity info json blob
-    printf("qe_identity.qe_id_info:[%s]\n", qe_id_args.qe_id_info);
+    printf("*qe_identity.qe_id_info:[%s]\n", qe_id_args.qe_id_info);
     OE_CHECK(oe_parse_qe_identity_info_json(
                                     qe_id_args.qe_id_info,
                                     qe_id_args.qe_id_info_size,
                                     &parsed_info));
+    printf("reterned from qe_identity.qe_id_info\n");
+
+    printf("parsed_info.version = %d\n", parsed_info.version);
+    printf("parsed_info.miscselect = %s\n", parsed_info.miscselect);
+    printf("parsed_info.miscselectMask = %s\n", parsed_info.miscselectMask);
+    //printf("parsed_info.attributes.flags = [%s]", parsed_info.attributes.flags);
+    //printf("parsed_info.attributes.xfrm = [%s]", parsed_info.attributes.xfrm);
+    printf("parsed_info.attributesMask = [%s]\n", parsed_info.attributesMask);
+    printf("parsed_info.mrsigner = [%s]\n", parsed_info.mrsigner);
+    printf("parsed_info.isvprodid = [%d]\n", parsed_info.isvprodid);
+    printf("parsed_info.isvsvn = [%hu]\n", parsed_info.isvsvn);
+    printf("parsed_info.signature = [%s]\n", parsed_info.signature);
 
     // verify qe identity signature
-    printf("qe_identity.signature:[%s]\n", qe_id_args.signature);
+    //printf("qe_identity.signature:[%s]\n", parsed_info.signature);
+    printf("Calling oe_verify_tcb_signature\n");
     OE_CHECK(oe_verify_tcb_signature(
-                qe_id_args.qe_id_info,
-                qe_id_args.qe_id_info_size,
-                (sgx_ecdsa256_signature_t*)qe_id_args.signature,
+                parsed_info.info_start,
+                parsed_info.info_size,
+                (sgx_ecdsa256_signature_t*)parsed_info.signature,
                 &pck_cert_chain));
+    printf("Returned from oe_verify_tcb_signature\n");
 
     // check identity
     oe_cleanup_qe_identity_info_args(&qe_id_args);

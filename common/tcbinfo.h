@@ -76,22 +76,19 @@ oe_result_t oe_verify_tcb_signature(
     sgx_ecdsa256_signature_t* signature,
     oe_cert_chain_t* tcb_cert_chain);
 
-
-
-
 typedef struct _oe_parsed_qe_identity_info
 {
     uint32_t version;
     oe_datetime_t issue_date;
     oe_datetime_t next_update;
 
-    uint32_t miscselect;        // The MISCSELECT that must be set
-    uint32_t miscselectMask;    // Mask of MISCSELECT to enforce
+    uint8_t miscselect[4];        // The MISCSELECT that must be set
+    uint8_t miscselectMask[4];    // Mask of MISCSELECT to enforce
 
     // TODO: find out what attributes are!
 
-    sgx_attributes_t attributes; // ATTRIBUTES Flags Field 
-    uint32_t         attributesMask; // string
+    uint8_t attributes[16]; // ATTRIBUTES Flags Field 
+    uint8_t attributesMask[16]; // string
 
     uint8_t mrsigner[OE_SHA256_SIZE]; // MRSIGNER of the enclave
 

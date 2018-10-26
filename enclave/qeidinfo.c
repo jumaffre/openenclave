@@ -95,6 +95,13 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
             tmp_args.issuer_chain,
             tmp_args.issuer_chain_size));
 
+    // OE_CHECK(
+    //     _copy_buffer_to_enclave(
+    //         &args->signature,
+    //         &args->signature_size,
+    //         tmp_args.signature,
+    //         sizeof(tmp_args.signature)));
+
 printf("******************Soccerl 4  %s args->qe_id_info = [%s]\n", __PRETTY_FUNCTION__, args->qe_id_info);
 printf("******************Soccerl 5  %s args->issuer_chain = [%s]\n", __PRETTY_FUNCTION__, args->issuer_chain);
 

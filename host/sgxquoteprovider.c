@@ -328,6 +328,7 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
     uint32_t host_buffer_size = 0;
     uint8_t* p = 0;
     uint8_t* p_end = 0;
+
     OE_TRACE_INFO("Calling %s\n", __PRETTY_FUNCTION__);
 
     if (!_get_qe_identity_info || !_free_qe_identity_info)
@@ -355,10 +356,9 @@ oe_result_t oe_get_qe_identity_info(oe_get_qe_identity_info_args_t* args)
         OE_RAISE(OE_INVALID_REVOCATION_INFO);
     }
 
-    host_buffer_size += identity->issuer_chain_size + 1;
-
     OE_TRACE_INFO("sgx_ql_get_qe_identity_info succeeded.\n");
 
+    host_buffer_size += identity->issuer_chain_size + 1;
     p = (uint8_t*)calloc(1, host_buffer_size);
     p_end = p + host_buffer_size;
     if (p == NULL)

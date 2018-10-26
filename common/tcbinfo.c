@@ -539,12 +539,15 @@ static oe_result_t _read_qe_identity_info(
     parsed_info->info_start = *itr;
     OE_CHECK(_read('{', itr, end));
 
+    printf("Reading version\n");
+
     OE_TRACE_INFO("Reading version\n");
     OE_CHECK(_read_property_name_and_colon("version", itr, end));
     OE_CHECK(_read_integer(itr, end, &value));
     parsed_info->version = (uint32_t)value;
     OE_CHECK(_read(',', itr, end));
 
+    printf("Reading issueDate\n");
     OE_TRACE_INFO("Reading issueDate\n");
     OE_CHECK(_read_property_name_and_colon("issueDate", itr, end));
     OE_CHECK(_read_string(itr, end, &date_str, &date_size));
@@ -555,6 +558,7 @@ static oe_result_t _read_qe_identity_info(
     OE_CHECK(_read(',', itr, end));
 
     // nextUpdate is treated as an optional property.
+    printf("Reading nextUpdate\n");
     OE_TRACE_INFO("Reading nextUpdate\n");
     if (_read_property_name_and_colon("nextUpdate", itr, end) == OE_OK)
     {
@@ -570,34 +574,39 @@ static oe_result_t _read_qe_identity_info(
         memset(&parsed_info->next_update, 0, sizeof(parsed_info->next_update));
     }
 
+    printf("Reading miscselect\n");
     OE_TRACE_INFO("Reading miscselect\n");
     OE_CHECK(_read_property_name_and_colon("miscselect", itr, end));
-    OE_CHECK(
-        _read_hex_string(
-            itr, end, parsed_info->miscselect, sizeof(parsed_info->miscselect)));
+    OE_CHECK(_read_hex_string(itr, end, parsed_info->miscselect, sizeof(parsed_info->miscselect)));
     OE_CHECK(_read(',', itr, end));
 
+    printf("Reading miscselectMask\n");
     OE_TRACE_INFO("Reading miscselectMask\n");
     OE_CHECK(_read_property_name_and_colon("miscselectMask", itr, end));
-    OE_CHECK(
-        _read_hex_string(
-            itr, end, parsed_info->miscselectMask, sizeof(parsed_info->miscselectMask)));
+    OE_CHECK(_read_hex_string(itr, end, parsed_info->miscselectMask, sizeof(parsed_info->miscselectMask)));
     OE_CHECK(_read(',', itr, end));
 
+// TODO: need to handle attributes.flags and attributes.xfrm
+// sigstruct->attributes.flags = attributes;
+// sigstruct->attributes.xfrm = SGX_ATTRIBUTES_DEFAULT_XFRM;
+
+    printf("Reading attributes\n");
     OE_TRACE_INFO("Reading attributes\n");
     OE_CHECK(_read_property_name_and_colon("attributes", itr, end));
-    OE_CHECK(
-        _read_hex_string(
-            itr, end, parsed_info->attributes, sizeof(parsed_info->attributes)));
+    OE_CHECK(_read_hex_string(itr, end, parsed_info->attributes, sizeof(parsed_info->attributes)));
     OE_CHECK(_read(',', itr, end));
 
+    // parsed_info->attributes.flags = SGX_ATTRIBUTES_DEFAULT_FLAGS;
+    // parsed_info->attributes.xfrm = SGX_ATTRIBUTES_DEFAULT_XFRM;
+
+
+    printf("Reading attributesMask\n");
     OE_TRACE_INFO("Reading attributesMask\n");
     OE_CHECK(_read_property_name_and_colon("attributesMask", itr, end));
-    OE_CHECK(
-        _read_hex_string(
-            itr, end, parsed_info->attributesMask, sizeof(parsed_info->attributesMask)));
+    OE_CHECK(_read_hex_string(itr, end, parsed_info->attributesMask, sizeof(parsed_info->attributesMask)));
     OE_CHECK(_read(',', itr, end));
 
+    printf("Reading mrsigner\n");
     OE_TRACE_INFO("Reading mrsigner\n");
     OE_CHECK(_read_property_name_and_colon("mrsigner", itr, end));
     OE_CHECK(
@@ -605,27 +614,41 @@ static oe_result_t _read_qe_identity_info(
             itr, end, parsed_info->mrsigner, sizeof(parsed_info->mrsigner)));
     OE_CHECK(_read(',', itr, end));
 
+
+    printf("parsed_info->mrsigner = %lu\n", sizeof(parsed_info->mrsigner));
+    for (int i=0; i<sizeof(parsed_info->mrsigner); i++)
+    {
+        printf("[%d]", parsed_info->mrsigner[i]);
+    }
+
+    printf("Reading isvprodid\n");
     OE_TRACE_INFO("Reading isvprodid\n");
     OE_CHECK(_read_property_name_and_colon("isvprodid", itr, end));
-    OE_CHECK(
-        _read_hex_string(
-            itr, end, parsed_info->isvprodid, sizeof(parsed_info->isvprodid)));
+    // OE_CHECK(_read_hex_string(itr, end, parsed_info->isvprodid, sizeof(parsed_info->isvprodid)));
+    OE_CHECK(_read_integer(itr, end, &value));
+    parsed_info->isvprodid = (uint32_t)value;
     OE_CHECK(_read(',', itr, end));
 
+    printf("isvprodid = [%d]\n", parsed_info->isvprodid);
+
+    printf("Reading isvsvn\n");
     OE_TRACE_INFO("Reading isvsvn\n");
     OE_CHECK(_read_property_name_and_colon("isvsvn", itr, end));
+    printf("Reading isvsvn2\n");
     OE_CHECK(_read_integer(itr, end, &value));
-    parsed_info->isvsvn = (uint32_t)value;
-    OE_CHECK(_read(',', itr, end));
+    printf("Reading isvsvn3 = %lu\n", value);
+    parsed_info->isvsvn = (uint16_t)value;
+    printf("after reading isvsvn\n");
 
     // itr is expected to point to the '}' that denotes the end of the tcb
     // object. The signature is generated over the entire object including the
     // '}'.
     parsed_info->info_size = *itr - parsed_info->info_start + 1;
     OE_CHECK(_read('}', itr, end));
-
+    OE_TRACE_INFO("Done with last read\n");
     result = OE_OK;
 done:
+    printf("Reading _read_qe_identity_info ended with [%s]\n", oe_result_str(result));
     return result;
 }
 
@@ -675,25 +698,33 @@ oe_result_t oe_parse_qe_identity_info_json(
     itr = _skip_ws(itr, end);
     OE_CHECK(_read('{', &itr, end));
 
+    printf("oe_parse_qe_identity_info_json\n");
+    printf("Reading qeIdentity\n");
+
     OE_TRACE_INFO("Reading qeIdentity\n");
     OE_CHECK(_read_property_name_and_colon("qeIdentity", &itr, end));
     OE_CHECK(_read_qe_identity_info(&itr, end, parsed_info));
     OE_CHECK(_read(',', &itr, end));
 
+    printf("Reading signature\n");
     OE_TRACE_INFO("Reading signature\n");
     OE_CHECK(_read_property_name_and_colon("signature", &itr, end));
-    OE_CHECK(
-        _read_hex_string(
-             &itr, end, parsed_info->signature, sizeof(parsed_info->signature)));
+    OE_CHECK(_read_hex_string(&itr, end, parsed_info->signature, sizeof(parsed_info->signature)));
+    for (int i=0; i<sizeof(parsed_info->signature); i++)
+    {
+        printf("#");
+        printf("[%d]", parsed_info->signature[i]);
+    }
+    printf("done with reading signature\n");
 
     OE_CHECK(_read('}', &itr, end));
-
     if (itr == end)
     {
         OE_TRACE_INFO("qe identity Info json parsing successful.\n");
         result = OE_OK;
     }
 
+    printf("oe_parse_qe_identity_info_json ended.\n");
   done:
     return result;
 }
