@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 enclave  {
+    include "mytypes.h"
+
     trusted {        
         // Test in, in-out, out, user_check attributes.
         // Also check ability to pass NULL.
@@ -14,10 +16,10 @@ enclave  {
         );
 
         public void ecall_array_wchar_t(
-            [in] wchar_t a1[2],
-            [in,out] wchar_t a2[2][2],
-            [out] wchar_t a3[3][3],
-            [user_check] wchar_t a4[4][4]
+            [in] oe_wchar_t a1[2],
+            [in,out] oe_wchar_t a2[2][2],
+            [out] oe_wchar_t a3[3][3],
+            [user_check] oe_wchar_t a4[4][4]
         );
 
         public void ecall_array_short(
@@ -49,10 +51,10 @@ enclave  {
         );
 
         public void ecall_array_long(
-            [in] long a1[2],
-            [in,out] long a2[2][2],
-            [out] long a3[3][3],
-            [user_check] long a4[4][4]
+            [in] oe_long_t a1[2],
+            [in,out] oe_long_t a2[2][2],
+            [out] oe_long_t a3[3][3],
+            [user_check] oe_long_t a4[4][4]
         );
 
         public void ecall_array_size_t(
@@ -133,10 +135,10 @@ enclave  {
         );
 
         public void ecall_array_long_double(
-            [in] long double a1[2],
-            [in,out] long double a2[2][2],
-            [out] long double a3[3][3],
-            [user_check] long double a4[4][4]
+            [in] oe_long_double_t a1[2],
+            [in,out] oe_long_double_t a2[2][2],
+            [out] oe_long_double_t a3[3][3],
+            [user_check] oe_long_double_t a4[4][4]
         );
 
         public void test_array_edl_ocalls();
@@ -154,10 +156,10 @@ enclave  {
         );
     
         void ocall_array_wchar_t(
-            [in] wchar_t a1[2],
-            [in,out] wchar_t a2[2][2],
-            [out] wchar_t a3[3][3],
-            [user_check] wchar_t a4[4][4]
+            [in] oe_wchar_t a1[2],
+            [in,out] oe_wchar_t a2[2][2],
+            [out] oe_wchar_t a3[3][3],
+            [user_check] oe_wchar_t a4[4][4]
         );
 
         void ocall_array_short(
@@ -189,10 +191,10 @@ enclave  {
         );
 
         void ocall_array_long(
-            [in] long a1[2],
-            [in,out] long a2[2][2],
-            [out] long a3[3][3],
-            [user_check] long a4[4][4]
+            [in] oe_long_t a1[2],
+            [in,out] oe_long_t a2[2][2],
+            [out] oe_long_t a3[3][3],
+            [user_check] oe_long_t a4[4][4]
         );
 
         void ocall_array_size_t(
@@ -273,10 +275,10 @@ enclave  {
         );  
 
         void ocall_array_long_double(
-            [in] long double a1[2],
-            [in,out] long double a2[2][2],
-            [out] long double a3[3][3],
-            [user_check] long double a4[4][4]
+            [in] oe_long_double_t a1[2],
+            [in,out] oe_long_double_t a2[2][2],
+            [out] oe_long_double_t a3[3][3],
+            [user_check] oe_long_double_t a4[4][4]
         );  
 
         void ocall_array_assert_all_called();

@@ -58,12 +58,12 @@ static void test_ocall_array_fun(F ocall_array_fun)
 void test_array_edl_ocalls()
 {
     test_ocall_array_fun<char>(ocall_array_char);
-    test_ocall_array_fun<wchar_t>(ocall_array_wchar_t);
+    test_ocall_array_fun<oe_wchar_t>(ocall_array_wchar_t);
     test_ocall_array_fun<short>(ocall_array_short);
     test_ocall_array_fun<int>(ocall_array_int);
     test_ocall_array_fun<float>(ocall_array_float);
     test_ocall_array_fun<double>(ocall_array_double);
-    test_ocall_array_fun<long>(ocall_array_long);
+    test_ocall_array_fun<oe_long_t>(ocall_array_long);
     test_ocall_array_fun<size_t>(ocall_array_size_t);
     test_ocall_array_fun<unsigned>(ocall_array_unsigned);
     test_ocall_array_fun<int8_t>(ocall_array_int8_t);
@@ -75,7 +75,7 @@ void test_array_edl_ocalls()
     test_ocall_array_fun<uint32_t>(ocall_array_uint32_t);
     test_ocall_array_fun<uint64_t>(ocall_array_uint64_t);
     test_ocall_array_fun<long long>(ocall_array_long_long);
-    test_ocall_array_fun<long double>(ocall_array_long_double);
+    test_ocall_array_fun<oe_long_double_t>(ocall_array_long_double);
 
     OE_TEST(ocall_array_assert_all_called() == OE_OK);
     printf("=== test_array_edl_ocalls passed\n");
@@ -135,10 +135,10 @@ void ecall_array_char(char a1[2], char a2[2][2], char a3[3][3], char a4[4][4])
 }
 
 void ecall_array_wchar_t(
-    wchar_t a1[2],
-    wchar_t a2[2][2],
-    wchar_t a3[3][3],
-    wchar_t a4[4][4])
+    oe_wchar_t a1[2],
+    oe_wchar_t a2[2][2],
+    oe_wchar_t a3[3][3],
+    oe_wchar_t a4[4][4])
 {
     ecall_array_fun_impl(a1, a2, a3, a4);
 }
@@ -175,7 +175,7 @@ void ecall_array_double(
     ecall_array_fun_impl(a1, a2, a3, a4);
 }
 
-void ecall_array_long(long a1[2], long a2[2][2], long a3[3][3], long a4[4][4])
+void ecall_array_long(oe_long_t a1[2], oe_long_t a2[2][2], oe_long_t a3[3][3], oe_long_t a4[4][4])
 {
     ecall_array_fun_impl(a1, a2, a3, a4);
 }
@@ -280,10 +280,10 @@ void ecall_array_long_long(
 }
 
 void ecall_array_long_double(
-    long double a1[2],
-    long double a2[2][2],
-    long double a3[3][3],
-    long double a4[4][4])
+    oe_long_double_t a1[2],
+    oe_long_double_t a2[2][2],
+    oe_long_double_t a3[3][3],
+    oe_long_double_t a4[4][4])
 {
     ecall_array_fun_impl(a1, a2, a3, a4);
 }
