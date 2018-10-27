@@ -42,8 +42,13 @@ int main(int argc, const char* argv[])
     test_string_edl_ecalls(enclave);
     OE_TEST(test_string_edl_ocalls(enclave) == OE_OK);
 
+    // Disable this test on Windows since the edl wstring attribute requires
+    // pointer to be of type wchar_t*, so we can't serialize it correctly
+    // across Linux and Windows due to their size differences.
+#if !defined(_WIN32)
     test_wstring_edl_ecalls(enclave);
     OE_TEST(test_wstring_edl_ocalls(enclave) == OE_OK);
+#endif
 
     test_array_edl_ecalls(enclave);
     OE_TEST(test_array_edl_ocalls(enclave) == OE_OK);
