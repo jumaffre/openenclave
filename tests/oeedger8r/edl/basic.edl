@@ -7,12 +7,12 @@ enclave  {
         /* Test all basic type parameters */
         public void ecall_basic_types(
             char arg1, 
-            wchar_t arg2, 
+            oe_wchar_t arg2, 
             short arg3, 
             int arg4, 
             float arg5, 
             double arg6, 
-            long arg7, 
+            oe_long_t arg7, 
             size_t arg8, 
             unsigned arg9,
             int8_t arg10, 
@@ -24,17 +24,17 @@ enclave  {
             uint32_t arg16, 
             uint64_t arg17,
             long long arg18,
-            long double arg19
+            oe_long_double_t arg19
         );
 
         /* Test all basic types are return type */
         public char ecall_ret_char();
-        public wchar_t ecall_ret_wchar_t();
+        public oe_wchar_t ecall_ret_wchar_t();
         public short ecall_ret_short();
         public int ecall_ret_int();
         public float ecall_ret_float();
         public double ecall_ret_double();
-        public long ecall_ret_long();
+        public oe_long_t ecall_ret_long();
         public size_t ecall_ret_size_t();
         public unsigned ecall_ret_unsigned();
         public int8_t ecall_ret_int8_t();
@@ -46,7 +46,7 @@ enclave  {
         public uint32_t ecall_ret_uint32_t();
         public uint64_t ecall_ret_uint64_t();   
         public long long ecall_ret_long_long();
-        public long double ecall_ret_long_double();
+        public oe_long_double_t ecall_ret_long_double();
         public void ecall_ret_void();
 
 
@@ -57,12 +57,12 @@ enclave  {
         /* Test all basic type parameters */
         void ocall_basic_types(
             char arg1, 
-            wchar_t arg2, 
+            oe_wchar_t arg2, 
             short arg3, 
             int arg4, 
             float arg5, 
             double arg6, 
-            long arg7, 
+            oe_long_t arg7, 
             size_t arg8, 
             unsigned arg9,
             int8_t arg10, 
@@ -74,17 +74,17 @@ enclave  {
             uint32_t arg16, 
             uint64_t arg17,
             long long arg18,
-            long double arg19
+            oe_long_double_t arg19
         );
 
         /* Test all basic types are return type */
         char ocall_ret_char();
-        wchar_t ocall_ret_wchar_t();
+        oe_wchar_t ocall_ret_wchar_t();
         short ocall_ret_short();
         int ocall_ret_int();
         float ocall_ret_float();
         double ocall_ret_double();
-        long ocall_ret_long();
+        oe_long_t ocall_ret_long();
         size_t ocall_ret_size_t();
         unsigned ocall_ret_unsigned();
         int8_t ocall_ret_int8_t();
@@ -96,7 +96,7 @@ enclave  {
         uint32_t ocall_ret_uint32_t();
         uint64_t ocall_ret_uint64_t();     
         long long ocall_ret_long_long();
-        long double ocall_ret_long_double();     
+        oe_long_double_t ocall_ret_long_double();     
         
         void ocall_ret_void();        
     }; 

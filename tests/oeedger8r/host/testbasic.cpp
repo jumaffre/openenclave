@@ -40,7 +40,7 @@ void test_basic_edl_ecalls(oe_enclave_t* enclave)
     }
 
     {
-        wchar_t ret = 0;
+        oe_wchar_t ret = 0;
         OE_TEST(ecall_ret_wchar_t(enclave, &ret) == OE_OK);
         OE_TEST(ret == ohm);
     }
@@ -70,7 +70,7 @@ void test_basic_edl_ecalls(oe_enclave_t* enclave)
     }
 
     {
-        long ret = 0;
+        oe_long_t ret = 0;
         OE_TEST(ecall_ret_long(enclave, &ret) == OE_OK);
         OE_TEST(ret == 777);
     }
@@ -142,7 +142,7 @@ void test_basic_edl_ecalls(oe_enclave_t* enclave)
     }
 
     {
-        long double ret = 0;
+        oe_long_double_t ret = 0;
         OE_TEST(ecall_ret_long_double(enclave, &ret) == OE_OK);
         OE_TEST(ret == 0.191919);
     }
@@ -156,12 +156,12 @@ void test_basic_edl_ecalls(oe_enclave_t* enclave)
 
 void ocall_basic_types(
     char arg1,
-    wchar_t arg2,
+    oe_wchar_t arg2,
     short arg3,
     int arg4,
     float arg5,
     double arg6,
-    long arg7,
+    oe_long_t arg7,
     size_t arg8,
     unsigned arg9,
     int8_t arg10,
@@ -173,19 +173,19 @@ void ocall_basic_types(
     uint32_t arg16,
     uint64_t arg17,
     long long arg18,
-    long double arg19)
+    oe_long_double_t arg19)
 {
     ecall_basic_types_args_t args;
 
     // Assert types of fields of the marshaling struct.
     check_type<char>(args.arg1);
-    check_type<wchar_t>(args.arg2);
+    check_type<oe_wchar_t>(args.arg2);
     check_type<short>(args.arg3);
     check_type<int>(args.arg4);
     check_type<int>(args.arg4);
     check_type<float>(args.arg5);
     check_type<double>(args.arg6);
-    check_type<long>(args.arg7);
+    check_type<oe_long_t>(args.arg7);
     check_type<size_t>(args.arg8);
     check_type<unsigned int>(args.arg9);
     check_type<int8_t>(args.arg10);
@@ -197,7 +197,7 @@ void ocall_basic_types(
     check_type<uint32_t>(args.arg16);
     check_type<uint64_t>(args.arg17);
     check_type<long long>(args.arg18);
-    check_type<long double>(args.arg19);
+    check_type<oe_long_double_t>(args.arg19);
 
     OE_TEST(arg1 == '?');
     OE_TEST(arg2 == ohm);
@@ -226,9 +226,9 @@ char ocall_ret_char()
     return '?';
 }
 
-wchar_t ocall_ret_wchar_t()
+oe_wchar_t ocall_ret_wchar_t()
 {
-    check_return_type<ocall_ret_wchar_t_args_t, wchar_t>();
+    check_return_type<ocall_ret_wchar_t_args_t, oe_wchar_t>();
     return ohm;
 }
 
@@ -256,7 +256,7 @@ double ocall_ret_double()
     return .444;
 }
 
-long ocall_ret_long()
+oe_long_t ocall_ret_long()
 {
     check_return_type<ocall_ret_int_args_t, int>();
     return 777;
@@ -328,9 +328,9 @@ long long ocall_ret_long_long()
     return 181818;
 }
 
-long double ocall_ret_long_double()
+oe_long_double_t ocall_ret_long_double()
 {
-    check_return_type<ocall_ret_long_double_args_t, long double>();
+    check_return_type<ocall_ret_long_double_args_t, oe_long_double_t>();
     return 0.191919;
 }
 
