@@ -81,11 +81,11 @@ oe_result_t oe_enforce_qe_identity(void)
                 &pck_cert_chain));
     printf("Returned from oe_verify_tcb_signature\n");
 
-    // check identity
     oe_cleanup_qe_identity_info_args(&qe_id_args);
     result = OE_OK;
 
 done:
+    oe_cert_chain_free(&pck_cert_chain);
     return result;
 }
 #endif
