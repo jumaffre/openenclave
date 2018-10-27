@@ -164,12 +164,12 @@ static void test_ocall_pointer_fun(F ocall_pointer_fun)
 void test_pointer_edl_ocalls()
 {
     test_ocall_pointer_fun<char>(ocall_pointer_char);
-    test_ocall_pointer_fun<wchar_t>(ocall_pointer_wchar_t);
+    test_ocall_pointer_fun<oe_wchar_t>(ocall_pointer_wchar_t);
     test_ocall_pointer_fun<short>(ocall_pointer_short);
     test_ocall_pointer_fun<int>(ocall_pointer_int);
     test_ocall_pointer_fun<float>(ocall_pointer_float);
     test_ocall_pointer_fun<double>(ocall_pointer_double);
-    test_ocall_pointer_fun<long>(ocall_pointer_long);
+    test_ocall_pointer_fun<oe_long_t>(ocall_pointer_long);
     test_ocall_pointer_fun<size_t>(ocall_pointer_size_t);
     test_ocall_pointer_fun<unsigned>(ocall_pointer_unsigned);
     test_ocall_pointer_fun<int8_t>(ocall_pointer_int8_t);
@@ -181,7 +181,7 @@ void test_pointer_edl_ocalls()
     test_ocall_pointer_fun<uint32_t>(ocall_pointer_uint32_t);
     test_ocall_pointer_fun<uint64_t>(ocall_pointer_uint64_t);
     test_ocall_pointer_fun<long long>(ocall_pointer_long_long);
-    test_ocall_pointer_fun<long double>(ocall_pointer_long_double);
+    test_ocall_pointer_fun<oe_long_double_t>(ocall_pointer_long_double);
 
     OE_TEST(ocall_pointer_assert_all_called() == OE_OK);
     printf("=== test_pointer_edl_ocalls passed\n");
@@ -278,7 +278,7 @@ static T* ecall_pointer_fun_impl(
         }
     }
 
-    // size specified as 80 (lcm of sizeof(double), sizeof(long))
+    // size specified as 80 (lcm of sizeof(double), sizeof(oe_long_t))
     {
         const size_t count = 80 / sizeof(T);
         T exp[count];
@@ -424,23 +424,23 @@ char* ecall_pointer_char(
         psize);
 }
 
-wchar_t* ecall_pointer_wchar_t(
-    wchar_t* p1,
-    wchar_t* p2,
-    wchar_t* p3,
-    wchar_t* p4,
-    wchar_t* p5,
-    wchar_t* p6,
-    wchar_t* p7,
-    wchar_t* p8,
-    wchar_t* p9,
-    wchar_t* p10,
-    wchar_t* p11,
-    wchar_t* p12,
-    wchar_t* p13,
-    wchar_t* p14,
-    wchar_t* p15,
-    wchar_t* p16,
+oe_wchar_t* ecall_pointer_wchar_t(
+    oe_wchar_t* p1,
+    oe_wchar_t* p2,
+    oe_wchar_t* p3,
+    oe_wchar_t* p4,
+    oe_wchar_t* p5,
+    oe_wchar_t* p6,
+    oe_wchar_t* p7,
+    oe_wchar_t* p8,
+    oe_wchar_t* p9,
+    oe_wchar_t* p10,
+    oe_wchar_t* p11,
+    oe_wchar_t* p12,
+    oe_wchar_t* p13,
+    oe_wchar_t* p14,
+    oe_wchar_t* p15,
+    oe_wchar_t* p16,
     int pcount,
     int psize)
 {
@@ -629,23 +629,23 @@ double* ecall_pointer_double(
         psize);
 }
 
-long* ecall_pointer_long(
-    long* p1,
-    long* p2,
-    long* p3,
-    long* p4,
-    long* p5,
-    long* p6,
-    long* p7,
-    long* p8,
-    long* p9,
-    long* p10,
-    long* p11,
-    long* p12,
-    long* p13,
-    long* p14,
-    long* p15,
-    long* p16,
+oe_long_t* ecall_pointer_long(
+    oe_long_t* p1,
+    oe_long_t* p2,
+    oe_long_t* p3,
+    oe_long_t* p4,
+    oe_long_t* p5,
+    oe_long_t* p6,
+    oe_long_t* p7,
+    oe_long_t* p8,
+    oe_long_t* p9,
+    oe_long_t* p10,
+    oe_long_t* p11,
+    oe_long_t* p12,
+    oe_long_t* p13,
+    oe_long_t* p14,
+    oe_long_t* p15,
+    oe_long_t* p16,
     int pcount,
     int psize)
 {
@@ -1121,23 +1121,23 @@ long long* ecall_pointer_long_long(
         psize);
 }
 
-long double* ecall_pointer_long_double(
-    long double* p1,
-    long double* p2,
-    long double* p3,
-    long double* p4,
-    long double* p5,
-    long double* p6,
-    long double* p7,
-    long double* p8,
-    long double* p9,
-    long double* p10,
-    long double* p11,
-    long double* p12,
-    long double* p13,
-    long double* p14,
-    long double* p15,
-    long double* p16,
+oe_long_double_t* ecall_pointer_long_double(
+    oe_long_double_t* p1,
+    oe_long_double_t* p2,
+    oe_long_double_t* p3,
+    oe_long_double_t* p4,
+    oe_long_double_t* p5,
+    oe_long_double_t* p6,
+    oe_long_double_t* p7,
+    oe_long_double_t* p8,
+    oe_long_double_t* p9,
+    oe_long_double_t* p10,
+    oe_long_double_t* p11,
+    oe_long_double_t* p12,
+    oe_long_double_t* p13,
+    oe_long_double_t* p14,
+    oe_long_double_t* p15,
+    oe_long_double_t* p16,
     int pcount,
     int psize)
 {
@@ -1198,7 +1198,7 @@ void ecall_count_attribute_all_types(
     int int_count,
     float float_count,
     double double_count,
-    long long_count,
+    oe_long_t long_count,
     size_t size_t_count,
     unsigned unsigned_count,
     int8_t int8_t_count,
@@ -1209,9 +1209,9 @@ void ecall_count_attribute_all_types(
     uint16_t uint16_t_count,
     uint32_t uint32_t_count,
     uint64_t uint64_t_count,
-    wchar_t wchar_t_count,
+    oe_wchar_t wchar_t_count,
     long long long_long_count,
-    long double long_double_count)
+    oe_long_double_t long_double_count)
 {
 }
 
@@ -1240,7 +1240,7 @@ void ecall_size_attribute_all_types(
     int int_size,
     float float_size,
     double double_size,
-    long long_size,
+    oe_long_t long_size,
     size_t size_t_size,
     unsigned unsigned_size,
     int8_t int8_t_size,
@@ -1251,8 +1251,8 @@ void ecall_size_attribute_all_types(
     uint16_t uint16_t_size,
     uint32_t uint32_t_size,
     uint64_t uint64_t_size,
-    wchar_t wchar_t_size,
+    oe_wchar_t wchar_t_size,
     long long long_long_size,
-    long double long_double_size)
+    oe_long_double_t long_double_size)
 {
 }
