@@ -157,7 +157,9 @@ oe_result_t VerifyQuoteImpl(
     const uint8_t* pck_crl,
     size_t pck_crl_size,
     const uint8_t* tcb_info_json,
-    size_t tcb_info_json_size)
+    size_t tcb_info_json_size,
+    uint8_t** cert_data,
+    size_t* cert_data_size)
 {
     oe_result_t result = OE_UNEXPECTED;
     sgx_quote_t* sgx_quote = NULL;
@@ -197,6 +199,13 @@ oe_result_t VerifyQuoteImpl(
             OE_RAISE(OE_FAILURE);
         pem_pck_certificate = qe_cert_data.data;
         pem_pck_certificate_size = qe_cert_data.size;
+
+        // Copy certificate chain outside.
+        if (cert_data_size != NULL)
+        {
+            *cert_data = qe_cert_data.data;
+            *cert_data_size = qe_cert_data.size;
+        }
     }
     else
     {
@@ -230,10 +239,10 @@ oe_result_t VerifyQuoteImpl(
                 &expected_root_public_key,
                 (const uint8_t*)g_expected_root_certificate_key,
                 strlen(g_expected_root_certificate_key) + 1));
-
         OE_CHECK(
             oe_ec_public_key_equal(
                 &root_public_key, &expected_root_public_key, &key_equal));
+
         if (!key_equal)
             OE_RAISE(OE_VERIFY_FAILED);
 
@@ -333,7 +342,9 @@ oe_result_t VerifyQuoteImpl(
     const uint8_t* enc_pck_crl,
     size_t enc_pck_crl_size,
     const uint8_t* enc_tcb_info_json,
-    size_t enc_tcb_info_json_size)
+    size_t enc_tcb_info_json_size,
+    uint8_t** cert_data,
+    size_t* cert_data_size)
 {
     OE_UNUSED(enc_quote);
     OE_UNUSED(quote_size);
@@ -343,6 +354,8 @@ oe_result_t VerifyQuoteImpl(
     OE_UNUSED(enc_pck_crl_size);
     OE_UNUSED(enc_tcb_info_json);
     OE_UNUSED(enc_tcb_info_json_size);
+    OE_UNUSED(cert_data);
+    OE_UNUSED(cert_data_size);
 
     return OE_UNSUPPORTED;
 }

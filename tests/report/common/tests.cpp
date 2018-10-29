@@ -37,7 +37,9 @@ oe_enclave_t* g_enclave = NULL;
 oe_result_t VerifyReport(
     const uint8_t* report,
     size_t report_size,
-    oe_report_t* parsed_report)
+    oe_report_t* parsed_report,
+    const uint8_t** cert_chain,
+    size_t* cert_chain_size)
 {
     oe_report_t tmp_report = {0};
     OE_TEST(oe_parse_report(report, report_size, &tmp_report) == OE_OK);
@@ -705,7 +707,7 @@ TEST_FCN void TestLocalVerifyReport(void* args_)
         GetReport(
             0, NULL, 0, target_info, target_info_size, report, &report_size) ==
         OE_OK);
-    OE_TEST(VerifyReport(report, report_size, NULL) == OE_OK);
+    OE_TEST(VerifyReport(report, report_size, NULL, NULL, NULL) == OE_OK);
 
 // 2. Report with full custom report data.
 #ifdef OE_BUILD_ENCLAVE
@@ -718,7 +720,7 @@ TEST_FCN void TestLocalVerifyReport(void* args_)
             target_info_size,
             report,
             &report_size) == OE_OK);
-    OE_TEST(VerifyReport(report, report_size, NULL) == OE_OK);
+    OE_TEST(VerifyReport(report, report_size, NULL, NULL, NULL) == OE_OK);
 
     // 3. Report with partial custom report data.
     OE_TEST(
@@ -730,7 +732,7 @@ TEST_FCN void TestLocalVerifyReport(void* args_)
             target_info_size,
             report,
             &report_size) == OE_OK);
-    OE_TEST(VerifyReport(report, report_size, NULL) == OE_OK);
+    OE_TEST(VerifyReport(report, report_size, NULL, NULL, NULL) == OE_OK);
 #endif
 
     // 4. Negative case.
@@ -743,7 +745,7 @@ TEST_FCN void TestLocalVerifyReport(void* args_)
         GetReport(
             0, NULL, 0, target_info, target_info_size, report, &report_size) ==
         OE_OK);
-    OE_TEST(VerifyReport(report, report_size, NULL) == OE_VERIFY_FAILED);
+    OE_TEST(VerifyReport(report, report_size, NULL, NULL, NULL) == OE_VERIFY_FAILED);
 }
 
 TEST_FCN void TestRemoteVerifyReport(void* args_)
@@ -775,7 +777,7 @@ TEST_FCN void TestRemoteVerifyReport(void* args_)
         OE_TEST(
             GetReport(flags, NULL, 0, NULL, 0, report_buffer, &report_size) ==
             OE_OK);
-        OE_TEST(VerifyReport(report_buffer, report_size, NULL) == OE_OK);
+        OE_TEST(VerifyReport(report_buffer, report_size, NULL, NULL, NULL) == OE_OK);
 
 #if OE_BUILD_ENCLAVE
         report_size = sizeof(report_buffer);
@@ -789,7 +791,7 @@ TEST_FCN void TestRemoteVerifyReport(void* args_)
                 0,
                 report_buffer,
                 &report_size) == OE_OK);
-        OE_TEST(VerifyReport(report_buffer, report_size, NULL) == OE_OK);
+        OE_TEST(VerifyReport(report_buffer, report_size, NULL, NULL, NULL) == OE_OK);
 
         report_size = sizeof(report_buffer);
         report_data_size = OE_REPORT_DATA_SIZE;
@@ -802,7 +804,7 @@ TEST_FCN void TestRemoteVerifyReport(void* args_)
                 0,
                 report_buffer,
                 &report_size) == OE_OK);
-        OE_TEST(VerifyReport(report_buffer, report_size, NULL) == OE_OK);
+        OE_TEST(VerifyReport(report_buffer, report_size, NULL, NULL, NULL) == OE_OK);
 #endif
     }
 }

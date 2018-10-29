@@ -18,7 +18,9 @@ oe_result_t VerifyQuoteImpl(
     const uint8_t* enc_pck_crl,
     size_t enc_pck_crl_size,
     const uint8_t* enc_tcb_info_json,
-    size_t enc_tcb_info_json_size);
+    size_t enc_tcb_info_json_size,
+    uint8_t** cert_data,
+    size_t* cert_data_size);
 
 OE_EXTERNC_END
 

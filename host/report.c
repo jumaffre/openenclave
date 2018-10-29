@@ -263,7 +263,9 @@ oe_result_t oe_verify_report(
                 NULL,
                 0,
                 NULL,
-                0));
+                0,
+                NULL,
+                NULL));
     }
     else if (header->report_type == OE_REPORT_TYPE_SGX_LOCAL)
     {

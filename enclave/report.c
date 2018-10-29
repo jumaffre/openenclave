@@ -48,7 +48,9 @@ done:
 oe_result_t oe_verify_report(
     const uint8_t* report,
     size_t report_size,
-    oe_report_t* parsed_report)
+    oe_report_t* parsed_report,
+    uint8_t** cert_chain,
+    size_t* cert_chain_size)
 {
     oe_result_t result = OE_UNEXPECTED;
     oe_report_t oe_report = {0};
@@ -75,7 +77,9 @@ oe_result_t oe_verify_report(
                 NULL,
                 0,
                 NULL,
-                0));
+                0,
+                cert_chain,
+                cert_chain_size));
     }
     else if (header->report_type == OE_REPORT_TYPE_SGX_LOCAL)
     {
@@ -183,7 +187,7 @@ void oe_handle_verify_report(uint64_t arg_in, uint64_t* arg_out)
 
     OE_CHECK(_safe_copy_verify_report_args(arg_in, &arg, &buffer));
 
-    OE_CHECK(oe_verify_report(arg.report, arg.report_size, NULL));
+    OE_CHECK(oe_verify_report(arg.report, arg.report_size, NULL, NULL, 0));
 
     // success.
     result = OE_OK;

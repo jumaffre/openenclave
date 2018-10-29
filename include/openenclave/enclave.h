@@ -396,7 +396,9 @@ oe_result_t oe_parse_report(
 oe_result_t oe_verify_report(
     const uint8_t* report,
     size_t report_size,
-    oe_report_t* parsed_report);
+    oe_report_t* parsed_report,
+    uint8_t** cert_data,
+    size_t* cert_data_size);
 
 /**
  * This enumeration type defines the policy used to derive a seal key.
