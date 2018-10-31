@@ -20,7 +20,7 @@ oe_result_t create_and_read_chain(
 
     oe_cert_chain_free(chain);
     // size + 1 to include null character.
-    oe_result_t result = oe_cert_chain_read_pem(chain, &s[0], s.size() + 1);
+    oe_result_t result = oe_cert_chain_read_pem(chain, &s[0], s.size() + 1, true);
     return result;
 }
 
@@ -194,27 +194,27 @@ void test_crls(
             intermediate_crl2_size) == OE_OK);
 
     // The following should succeed since no crls are pased in.
-    OE_TEST(oe_cert_verify(&leaf_cert1, &cert_chain, NULL, 0, &error) == OE_OK);
+    OE_TEST(oe_cert_verify(&leaf_cert1, &cert_chain, NULL, 0, &error, true) == OE_OK);
 
-    OE_TEST(oe_cert_verify(&leaf_cert2, &cert_chain, NULL, 0, &error) == OE_OK);
+    OE_TEST(oe_cert_verify(&leaf_cert2, &cert_chain, NULL, 0, &error, true) == OE_OK);
 
     // The following should succeed since both crl1s don't revoke any
     // certificates.
     {
         oe_crl_t* crls[] = {&root_crl1_obj, &intermediate_crl1_obj};
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error) == OE_OK);
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error, true) == OE_OK);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error) == OE_OK);
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error, true) == OE_OK);
 
         // Crls can be given in any order.
         std::swap(crls[0], crls[1]);
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error) == OE_OK);
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error, true) == OE_OK);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error) == OE_OK);
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error, true) == OE_OK);
     }
 
     // With root_crl1 and intermediate_crl2, leaf1 should pass, but leaf2 should
@@ -222,20 +222,20 @@ void test_crls(
     {
         oe_crl_t* crls[] = {&root_crl1_obj, &intermediate_crl2_obj};
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error) == OE_OK);
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error, true) == OE_OK);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error) ==
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_CERT_REVOKED) == 0);
 
         // Crls can be given in any order.
         std::swap(crls[0], crls[1]);
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error) == OE_OK);
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error, true) == OE_OK);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error) ==
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_CERT_REVOKED) == 0);
     }
@@ -245,24 +245,24 @@ void test_crls(
     {
         oe_crl_t* crls[] = {&root_crl2_obj, &intermediate_crl1_obj};
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error) ==
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_CERT_REVOKED) == 0);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error) ==
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_CERT_REVOKED) == 0);
 
         // Crls can be given in any order.
         std::swap(crls[0], crls[1]);
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error) ==
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 2, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_CERT_REVOKED) == 0);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error) ==
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 2, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_CERT_REVOKED) == 0);
     }
@@ -272,24 +272,24 @@ void test_crls(
     {
         oe_crl_t* crls[] = {&root_crl1_obj};
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 1, &error) ==
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 1, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_MISSING_CRL) == 0);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 1, &error) ==
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 1, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_MISSING_CRL) == 0);
 
         // Try out the other crl.
         crls[0] = &intermediate_crl1_obj;
         OE_TEST(
-            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 1, &error) ==
+            oe_cert_verify(&leaf_cert1, &cert_chain, crls, 1, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_MISSING_CRL) == 0);
 
         OE_TEST(
-            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 1, &error) ==
+            oe_cert_verify(&leaf_cert2, &cert_chain, crls, 1, &error, true) ==
             OE_VERIFY_FAILED);
         OE_TEST(strcmp(error.buf, ERROR_MSG_MISSING_CRL) == 0);
     }

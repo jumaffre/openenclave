@@ -328,10 +328,10 @@ static void _test_cert_verify_good()
     r = oe_cert_read_pem(&cert, _CERT1, sizeof(_CERT1));
     OE_TEST(r == OE_OK);
 
-    r = oe_cert_chain_read_pem(&chain, CHAIN1, sizeof(CHAIN1));
+    r = oe_cert_chain_read_pem(&chain, CHAIN1, sizeof(CHAIN1), true);
     OE_TEST(r == OE_OK);
 
-    r = oe_cert_verify(&cert, &chain, NULL, 0, &error);
+    r = oe_cert_verify(&cert, &chain, NULL, 0, &error, true);
     OE_TEST(r == OE_OK);
 
     oe_cert_free(&cert);
@@ -353,10 +353,10 @@ static void _test_cert_verify_bad()
     OE_TEST(r == OE_OK);
 
     /* Chain does not contain a root for this certificate */
-    r = oe_cert_chain_read_pem(&chain, CHAIN2, sizeof(CHAIN2));
+    r = oe_cert_chain_read_pem(&chain, CHAIN2, sizeof(CHAIN2), true);
     OE_TEST(r == OE_OK);
 
-    r = oe_cert_verify(&cert, &chain, NULL, 0, &error);
+    r = oe_cert_verify(&cert, &chain, NULL, 0, &error, true);
     OE_TEST(r == OE_VERIFY_FAILED);
 
     oe_cert_free(&cert);
@@ -377,7 +377,7 @@ static void _test_mixed_chain()
     OE_TEST(r == OE_OK);
 
     /* Chain does not contain a root for this certificate */
-    r = oe_cert_chain_read_pem(&chain, MIXED_CHAIN, sizeof(MIXED_CHAIN));
+    r = oe_cert_chain_read_pem(&chain, MIXED_CHAIN, sizeof(MIXED_CHAIN), true);
     OE_TEST(r == OE_FAILURE);
 
     oe_cert_free(&cert);
@@ -570,7 +570,7 @@ static void _test_cert_methods()
         oe_cert_chain_t chain = {0};
 
         /* Load the chain from PEM format */
-        r = oe_cert_chain_read_pem(&chain, CHAIN1, sizeof(CHAIN1));
+        r = oe_cert_chain_read_pem(&chain, CHAIN1, sizeof(CHAIN1), true);
         OE_TEST(r == OE_OK);
 
         /* Get the length of the chain */
@@ -606,7 +606,7 @@ static void _test_cert_methods()
         oe_cert_t leaf = {0};
 
         /* Load the chain from PEM format */
-        r = oe_cert_chain_read_pem(&chain, CHAIN1, sizeof(CHAIN1));
+        r = oe_cert_chain_read_pem(&chain, CHAIN1, sizeof(CHAIN1), true);
         OE_TEST(r == OE_OK);
 
         /* Get the root certificate */

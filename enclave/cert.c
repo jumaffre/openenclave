@@ -613,7 +613,8 @@ done:
 oe_result_t oe_cert_chain_read_pem(
     oe_cert_chain_t* chain,
     const void* pem_data,
-    size_t pem_size)
+    size_t pem_size,
+    bool verify_chain)
 {
     oe_result_t result = OE_UNEXPECTED;
     CertChain* impl = (CertChain*)chain;
@@ -642,15 +643,18 @@ oe_result_t oe_cert_chain_read_pem(
         OE_RAISE(OE_FAILURE);
     }
 
-    /* Reorder certs in the chain to preferred order */
-    referent->crt = _sort_certs_by_issue_date(referent->crt);
+    if (verify_chain)
+    {
+        /* Reorder certs in the chain to preferred order */
+        referent->crt = _sort_certs_by_issue_date(referent->crt);
 
-    /* Verify the whole certificate chain */
-    OE_CHECK(_verify_whole_chain(referent->crt));
+        /* Verify the whole certificate chain */
+        OE_CHECK(_verify_whole_chain(referent->crt));
 
-    /* Calculate the length of the certificate chain */
-    for (mbedtls_x509_crt* p = referent->crt; p; p = p->next)
-        referent->length++;
+        /* Calculate the length of the certificate chain */
+        for (mbedtls_x509_crt* p = referent->crt; p; p = p->next)
+            referent->length++;
+    }
 
     /* Initialize the implementation and increment reference count */
     OE_CHECK(_cert_chain_init(impl, referent));
@@ -690,7 +694,8 @@ oe_result_t oe_cert_verify(
     oe_cert_chain_t* chain,
     const oe_crl_t* const* crls,
     size_t num_crls,
-    oe_verify_cert_error_t* error)
+    oe_verify_cert_error_t* error,
+    bool verify_chain)
 {
     oe_result_t result = OE_UNEXPECTED;
     Cert* cert_impl = (Cert*)cert;
@@ -771,34 +776,39 @@ oe_result_t oe_cert_verify(
     }
 
     /* Verify every certificate in the certificate chain. */
-    for (mbedtls_x509_crt* p = chain_impl->referent->crt; p; p = p->next)
+    if (verify_chain)
     {
-        /* Verify the current certificate in the chain. */
-        if (mbedtls_x509_crt_verify(
-                p,
-                chain_impl->referent->crt,
-                crl_list,
-                NULL,
-                &flags,
-                NULL,
-                NULL) != 0)
+        for (mbedtls_x509_crt* p = chain_impl->referent->crt; p; p = p->next)
         {
-            if (error)
+            printf("[OE] Going through this once...\n");
+            /* Verify the current certificate in the chain. */
+            if (mbedtls_x509_crt_verify(
+                    p,
+                    chain_impl->referent->crt,
+                    crl_list,
+                    NULL,
+                    &flags,
+                    NULL,
+                    NULL) != 0)
             {
-                mbedtls_x509_crt_verify_info(
-                    error->buf, sizeof(error->buf), "", flags);
+                if (error)
+                {
+                    mbedtls_x509_crt_verify_info(
+                        error->buf, sizeof(error->buf), "", flags);
+                    printf("[OE] Certificates don't match\n");
+                }
+
+                OE_RAISE(OE_VERIFY_FAILED);
             }
 
-            OE_RAISE(OE_VERIFY_FAILED);
-        }
-
-        /* Verify that the CRL list has an issuer for this certificate. */
-        if (crl_list)
-        {
-            if (!_crl_list_find_issuer_for_cert(crl_list, p))
+            /* Verify that the CRL list has an issuer for this certificate. */
+            if (crl_list)
             {
-                _set_err(error, "unable to get certificate CRL");
-                OE_RAISE(OE_VERIFY_FAILED);
+                if (!_crl_list_find_issuer_for_cert(crl_list, p))
+                {
+                    _set_err(error, "unable to get certificate CRL");
+                    OE_RAISE(OE_VERIFY_FAILED);
+                }
             }
         }
     }

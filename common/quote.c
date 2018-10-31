@@ -157,7 +157,9 @@ oe_result_t VerifyQuoteImpl(
     const uint8_t* pck_crl,
     size_t pck_crl_size,
     const uint8_t* tcb_info_json,
-    size_t tcb_info_json_size)
+    size_t tcb_info_json_size,
+    const uint8_t* pem_trusted_ca,
+    size_t pem_trusted_ca_size)
 {
     oe_result_t result = OE_UNEXPECTED;
     sgx_quote_t* sgx_quote = NULL;
@@ -165,6 +167,7 @@ oe_result_t VerifyQuoteImpl(
     sgx_qe_auth_data_t qe_auth_data = {0};
     sgx_qe_cert_data_t qe_cert_data = {0};
     oe_cert_chain_t pck_cert_chain = {0};
+    oe_cert_chain_t trusted_ca_list = {0};
     oe_sha256_context_t sha256_ctx = {0};
     OE_SHA256 sha256 = {0};
     oe_ec_public_key_t attestation_key = {0};
@@ -174,6 +177,7 @@ oe_result_t VerifyQuoteImpl(
     oe_ec_public_key_t leaf_public_key = {0};
     oe_ec_public_key_t root_public_key = {0};
     oe_ec_public_key_t expected_root_public_key = {0};
+    oe_verify_cert_error_t cert_verify_error = {0};
     bool key_equal = false;
 
     OE_CHECK(
@@ -213,7 +217,8 @@ oe_result_t VerifyQuoteImpl(
             oe_cert_chain_read_pem(
                 &pck_cert_chain,
                 pem_pck_certificate,
-                pem_pck_certificate_size));
+                pem_pck_certificate_size,
+                true));
 
         // Fetch leaf and root certificates.
         OE_CHECK(oe_cert_chain_get_leaf_cert(&pck_cert_chain, &leaf_cert));
@@ -224,16 +229,38 @@ oe_result_t VerifyQuoteImpl(
         OE_CHECK(oe_cert_get_ec_public_key(&leaf_cert, &leaf_public_key));
         OE_CHECK(oe_cert_get_ec_public_key(&root_cert, &root_public_key));
 
+        // Verify chain against trusted CA.
+        if (pem_trusted_ca != NULL && pem_trusted_ca_size != 0)
+        {
+            // Parse trusted CA certificates into a list.
+            OE_CHECK(
+                oe_cert_chain_read_pem(
+                    &trusted_ca_list,
+                    pem_trusted_ca,
+                    pem_trusted_ca_size,
+                    false));
+
+            // Verify pck certificate against parsed trusted CA list.
+            OE_CHECK(
+                oe_cert_verify(
+                    &leaf_cert,
+                    &trusted_ca_list,
+                    NULL,
+                    0,
+                    &cert_verify_error,
+                    false));
+        }
+
         // Ensure that the root certificate matches root of trust.
         OE_CHECK(
             oe_ec_public_key_read_pem(
                 &expected_root_public_key,
                 (const uint8_t*)g_expected_root_certificate_key,
                 strlen(g_expected_root_certificate_key) + 1));
-
         OE_CHECK(
             oe_ec_public_key_equal(
                 &root_public_key, &expected_root_public_key, &key_equal));
+
         if (!key_equal)
             OE_RAISE(OE_VERIFY_FAILED);
 
@@ -333,7 +360,9 @@ oe_result_t VerifyQuoteImpl(
     const uint8_t* enc_pck_crl,
     size_t enc_pck_crl_size,
     const uint8_t* enc_tcb_info_json,
-    size_t enc_tcb_info_json_size)
+    size_t enc_tcb_info_json_size,
+    const uint8_t* pem_trusted_ca,
+    size_t pem_trusted_ca_size)
 {
     OE_UNUSED(enc_quote);
     OE_UNUSED(quote_size);
@@ -343,6 +372,8 @@ oe_result_t VerifyQuoteImpl(
     OE_UNUSED(enc_pck_crl_size);
     OE_UNUSED(enc_tcb_info_json);
     OE_UNUSED(enc_tcb_info_json_size);
+    OE_UNUSED(pem_trusted_ca);
+    OE_UNUSED(pem_trusted_ca_size);
 
     return OE_UNSUPPORTED;
 }

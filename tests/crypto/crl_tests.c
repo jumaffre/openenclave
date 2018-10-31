@@ -233,7 +233,7 @@ static void _test_verify(
     r = oe_cert_read_pem(&cert, cert_pem, strlen(cert_pem) + 1);
     OE_TEST(r == OE_OK);
 
-    r = oe_cert_chain_read_pem(&chain, chain_pem, strlen(chain_pem) + 1);
+    r = oe_cert_chain_read_pem(&chain, chain_pem, strlen(chain_pem) + 1, true);
     OE_TEST(r == OE_OK);
 
     if (!crl)
@@ -242,7 +242,7 @@ static void _test_verify(
     if (crl)
         OE_TEST(num_crl > 0);
 
-    r = oe_cert_verify(&cert, &chain, crl, num_crl, &error);
+    r = oe_cert_verify(&cert, &chain, crl, num_crl, &error, true);
 
     if (revoked)
     {

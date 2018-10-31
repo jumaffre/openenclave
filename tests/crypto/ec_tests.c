@@ -434,7 +434,7 @@ static void _test_cert_methods()
         oe_cert_chain_t chain;
 
         /* Load the chain from PEM format */
-        r = oe_cert_chain_read_pem(&chain, _CHAIN, sizeof(_CHAIN));
+        r = oe_cert_chain_read_pem(&chain, _CHAIN, sizeof(_CHAIN), true);
         OE_TEST(r == OE_OK);
 
         /* Get the length of the chain */
@@ -470,7 +470,7 @@ static void _test_cert_methods()
         oe_cert_t leaf;
 
         /* Load the chain from PEM format */
-        r = oe_cert_chain_read_pem(&chain, _CHAIN, sizeof(_CHAIN));
+        r = oe_cert_chain_read_pem(&chain, _CHAIN, sizeof(_CHAIN), true);
         OE_TEST(r == OE_OK);
 
         /* Get the root certificate */
@@ -638,7 +638,7 @@ static void _test_cert_chain_read()
     oe_result_t r;
     oe_cert_chain_t chain;
 
-    r = oe_cert_chain_read_pem(&chain, _CHAIN, sizeof(_CHAIN));
+    r = oe_cert_chain_read_pem(&chain, _CHAIN, sizeof(_CHAIN), true);
     OE_TEST(r == OE_OK);
 
     oe_cert_chain_free(&chain);

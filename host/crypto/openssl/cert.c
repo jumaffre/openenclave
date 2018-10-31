@@ -530,7 +530,8 @@ static void _sort_certs_by_issue_date(STACK_OF(X509) * chain)
 oe_result_t oe_cert_chain_read_pem(
     oe_cert_chain_t* chain,
     const void* pem_data,
-    size_t pem_size)
+    size_t pem_size,
+    bool verify_chain)
 {
     oe_result_t result = OE_UNEXPECTED;
     CertChain* impl = (CertChain*)chain;
@@ -555,11 +556,14 @@ oe_result_t oe_cert_chain_read_pem(
     if (!(sk = _read_cert_chain((const char*)pem_data)))
         OE_RAISE(OE_FAILURE);
 
-    /* Reorder certs in the chain to preferred order */
-    _sort_certs_by_issue_date(sk);
+    if (verify_chain)
+    {
+        /* Reorder certs in the chain to preferred order */
+        _sort_certs_by_issue_date(sk);
 
-    /* Verify the whole certificate chain */
-    OE_CHECK(_verify_whole_chain(sk));
+        /* Verify the whole certificate chain */
+        OE_CHECK(_verify_whole_chain(sk));
+    }
 
     _cert_chain_init(impl, sk);
 
@@ -596,7 +600,8 @@ oe_result_t oe_cert_verify(
     oe_cert_chain_t* chain,
     const oe_crl_t* const* crls,
     size_t num_crls,
-    oe_verify_cert_error_t* error)
+    oe_verify_cert_error_t* error,
+    bool verify_chain)
 {
     oe_result_t result = OE_UNEXPECTED;
     Cert* cert_impl = (Cert*)cert;

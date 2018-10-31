@@ -206,7 +206,8 @@ oe_result_t oe_enforce_revocation(
         oe_cert_chain_read_pem(
             &tcb_issuer_chain,
             revocation_args.tcb_issuer_chain,
-            revocation_args.tcb_issuer_chain_size));
+            revocation_args.tcb_issuer_chain_size,
+            true));
 
     // Read CRLs for each cert other than root. If any CRL is missing, the read
     // will error out.
@@ -219,7 +220,8 @@ oe_result_t oe_enforce_revocation(
             oe_cert_chain_read_pem(
                 &crl_issuer_chain[i],
                 revocation_args.crl_issuer_chain[i],
-                revocation_args.crl_issuer_chain_size[i]));
+                revocation_args.crl_issuer_chain_size[i],
+                true));
     }
 
     // Verify the leaf cert.
@@ -238,7 +240,7 @@ oe_result_t oe_enforce_revocation(
     // chain, then verification would fail because the CRLs will not be found
     // for certificates in the chain.
     r = oe_cert_verify(
-        leaf_cert, &crl_issuer_chain[0], crl_ptrs, 2, &cert_verify_error);
+        leaf_cert, &crl_issuer_chain[0], crl_ptrs, 2, &cert_verify_error, true);
     if (r != OE_OK)
     {
         OE_TRACE_INFO(

@@ -47,7 +47,7 @@ void test_minimum_issue_date(oe_datetime_t now)
             &report_size) == OE_OK);
 
     // Verify the report.
-    OE_TEST(oe_verify_report(report, report_size, NULL) == OE_OK);
+    OE_TEST(oe_verify_report(report, report_size, NULL, NULL, 0) == OE_OK);
 
     // Set the minimum issue date to current time.
     char str[256];
@@ -69,7 +69,7 @@ void test_minimum_issue_date(oe_datetime_t now)
 
     // Verify the report.
     OE_TEST(
-        oe_verify_report(report, report_size, NULL) ==
+        oe_verify_report(report, report_size, NULL, NULL, 0) ==
         OE_INVALID_REVOCATION_INFO);
 
     printf("test_minimum_issue_date passed.\n");

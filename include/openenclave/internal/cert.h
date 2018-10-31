@@ -80,13 +80,15 @@ oe_result_t oe_cert_read_pem(
  * @param chain initialized certificate chain handle upon return
  * @param pem_data zero-terminated PEM data
  * @param pem_size size of the PEM data (including the zero-terminator)
+ * @param verify_chain whether to verify the certificate chain as well
  *
  * @return OE_OK load was successful
  */
 oe_result_t oe_cert_chain_read_pem(
     oe_cert_chain_t* chain,
     const void* pem_data,
-    size_t pem_size);
+    size_t pem_size,
+    bool verify_chain);
 
 /**
  * Releases a certificate
@@ -121,6 +123,7 @@ oe_result_t oe_cert_chain_free(oe_cert_chain_t* chain);
  * @param crls verify the certificate against these CRLs (may be null).
  * @param num_crls number of CRLs.
  * @param error Optional. Holds the error message if this function failed.
+ * @param verify_chain whether to verify the certificate chain
  *
  * @return OE_OK verify ok
  * @return OE_VERIFY_FAILED
@@ -132,7 +135,8 @@ oe_result_t oe_cert_verify(
     oe_cert_chain_t* chain,
     const oe_crl_t* const* crls,
     size_t num_crls,
-    oe_verify_cert_error_t* error);
+    oe_verify_cert_error_t* error,
+    bool verify_chain);
 
 /**
  * Get the RSA public key from a certificate.
